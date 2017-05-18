@@ -9,34 +9,33 @@ tags:
     - iOS
 ---
 
-###
 Xcode升级到版本8之后，需要做权限适配才能正常调用设备的功能，不然在打包之后在调用时就会出现崩溃。适配方法是在工程的plist文件中添加对应的键值对，具体如下。
 
 *****
 
-###麦克风权限：
+麦克风权限：
 >Privacy - Microphone Usage Description 是否允许程序访问你的麦克风？
 
-###相机权限：
+相机权限：
 >Privacy - Camera Usage Description 是否允许程序访问你的相机？
 
-###相册权限：
+相册权限：
 >Privacy - Photo Library Usage Description 是否允许程序访问你的媒体资料库？
 
-###通讯录权限：
+通讯录权限：
 >Privacy - Contacts Usage Description 是否允许程序访问你的通讯录？
 
-###蓝牙权限：
+蓝牙权限：
 >Privacy - Bluetooth Peripheral Usage Description 是否许允程序使用蓝牙？
 
-###语音转文字权限：
+语音转文字权限：
 >Privacy - Speech Recognition Usage Description 是否允许程序使用语音识别？
 
-###日历权限：
+日历权限：
 >Privacy - Calendars Usage Description 是否允许程序访问你的日历？
 
-###定位权限：
+定位权限：
 >Privacy - Location When In Use Usage Description 是否允许程序获取你的位置信息?
 
-###定位权限:
+定位权限:
 >Privacy - Location Always Usage Description 是否允许程序获取你的位置信息?

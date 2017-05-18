@@ -6,7 +6,7 @@ email: 909309723@qq.com
 description: "天道酬勤"
 keyword: ""
 url: "http://www.xttxqjfg.cn"              # your host, for absolute URL
-baseurl: "/huxblog-boilerplate"         # for example, '/blog' if your blog hosted on 'host/blog'
+baseurl: ""         # for example, '/blog' if your blog hosted on 'host/blog'
 
 
 

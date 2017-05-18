@@ -1,0 +1,34 @@
+---
+layout:     post
+title:      "Xcode重定向log到本地"
+subtitle:   ""
+date:       2017-05-18 17:12:00
+author:     "易博"
+header-img: "img/201705/18/head_bg.JPG"
+tags:
+    - Objective-C
+---
+
+在使用Xcode开发过程中，有时候调试问题的前提是必须要杀掉app，这个时候就无法与xcode联机查看日志了，那么怎么办呢？我们可以将nslog的信息输出到本地的log文件，然后导出查看。
+
+开始前我们需要在工程的plist文件中设置日志共享，这样才能利用itunes导出日志文件
+
+在info.plist中，增加Application supports iTunes file sharing，并将值设置为true，然后在程序启动之后调用下面的方法即可。
+
+  - (void)redirectNSlogToDocumentFolder {  
+      NSLog(@"Log重定向到本地，如果您需要控制台Log，注释掉重定向逻辑即可。");  
+      NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory,NSUserDomainMask, YES);  
+      NSString *documentDirectory = [paths objectAtIndex:0];  
+
+      NSDate *currentDate = [NSDate date];  
+      NSDateFormatter *dateformatter = [[NSDateFormatter alloc] init];  
+      [dateformatter setDateFormat:@"MMddHHmmss"];  
+      NSString *formattedDate = [dateformatter stringFromDate:currentDate];  
+
+      NSString *fileName = [NSString stringWithFormat:@"rc%@.log", formattedDate];  
+      NSString *logFilePath =  
+      [documentDirectory stringByAppendingPathComponent:fileName];  
+
+      freopen([logFilePath cStringUsingEncoding:NSASCIIStringEncoding], "a+", stdout);  
+      freopen([logFilePath cStringUsingEncoding:NSASCIIStringEncoding], "a+", stderr);  
+    }

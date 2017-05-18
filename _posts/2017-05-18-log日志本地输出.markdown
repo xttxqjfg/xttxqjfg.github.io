@@ -16,21 +16,23 @@ tags:
 在info.plist中，增加Application supports iTunes file sharing，并将值设置为true，然后在程序启动之后调用下面的方法即可。
 
 ```
-        -(void)redirectNSlogToDocumentFolder {  
-            NSLog(@"Log重定向到本地，如果您需要控制台Log，注释掉重定向逻辑即可。");  
-            NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory,NSUserDomainMask, YES);  
-            NSString *documentDirectory = [paths objectAtIndex:0];  
+-(void)redirectNSlogToDocumentFolder {  
+    NSLog(@"Log重定向到本地，如果您需要控制台Log，注释掉重定向逻辑即可。");  
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory,NSUserDomainMask, YES);  
+    NSString *documentDirectory = [paths objectAtIndex:0];  
 
-            NSDate *currentDate = [NSDate date];  
-            NSDateFormatter *dateformatter = [[NSDateFormatter alloc] init];  
-            [dateformatter setDateFormat:@"MMddHHmmss"];  
-            NSString *formattedDate = [dateformatter stringFromDate:currentDate];  
+    NSDate *currentDate = [NSDate date];  
+    NSDateFormatter *dateformatter = [[NSDateFormatter alloc] init];  
+    [dateformatter setDateFormat:@"MMddHHmmss"];  
+    NSString *formattedDate = [dateformatter stringFromDate:currentDate];  
 
-            NSString *fileName = [NSString stringWithFormat:@"rc%@.log", formattedDate];  
-            NSString *logFilePath =  
-            [documentDirectory stringByAppendingPathComponent:fileName];  
+    NSString *fileName = [NSString stringWithFormat:@"log%@.log", formattedDate];  
+    NSString *logFilePath =  
+    [documentDirectory stringByAppendingPathComponent:fileName];  
 
-            freopen([logFilePath cStringUsingEncoding:NSASCIIStringEncoding], "a+", stdout);  
-            freopen([logFilePath cStringUsingEncoding:NSASCIIStringEncoding], "a+", stderr);  
-        }
+    freopen([logFilePath cStringUsingEncoding:NSASCIIStringEncoding], "a+", stdout);  
+    freopen([logFilePath cStringUsingEncoding:NSASCIIStringEncoding], "a+", stderr);  
+}
 ```
+
+![](../img/201705/18/log.png)

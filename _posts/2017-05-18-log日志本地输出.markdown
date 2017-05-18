@@ -15,6 +15,7 @@ tags:
 
 在info.plist中，增加Application supports iTunes file sharing，并将值设置为true，然后在程序启动之后调用下面的方法即可。
 
+~~~
         -(void)redirectNSlogToDocumentFolder {  
             NSLog(@"Log重定向到本地，如果您需要控制台Log，注释掉重定向逻辑即可。");  
             NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory,NSUserDomainMask, YES);  
@@ -32,3 +33,4 @@ tags:
             freopen([logFilePath cStringUsingEncoding:NSASCIIStringEncoding], "a+", stdout);  
             freopen([logFilePath cStringUsingEncoding:NSASCIIStringEncoding], "a+", stderr);  
         }
+~~~

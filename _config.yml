@@ -1,5 +1,5 @@
 # Site settings
-title: 疯子的技术博客
+title: 上善若水，厚德载物
 SEOTitle:
 header-img: img/home-bg.jpg
 email: 909309723@qq.com
@@ -12,9 +12,9 @@ baseurl: ""         # for example, '/blog' if your blog hosted on 'host/blog'
 
 # SNS settings
 RSS: false
-#weibo_username:
+weibo_username:     Mr_易博
 #zhihu_username:
-#github_username:    xttxqjfg
+github_username:    xttxqjfg
 #twitter_username:
 #facebook_username:
 

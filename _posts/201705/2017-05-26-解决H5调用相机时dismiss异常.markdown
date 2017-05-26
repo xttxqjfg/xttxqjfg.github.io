@@ -9,6 +9,8 @@ tags:
     - Hybrid
 ---
 
+
+
 ```
 <input type="file" accept="image/*" capture="camera">
 ```

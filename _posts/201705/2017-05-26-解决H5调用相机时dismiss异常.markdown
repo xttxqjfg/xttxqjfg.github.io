@@ -1,0 +1,25 @@
+---
+layout:     post
+title:      "解决H5调用相机时关闭异常的问题"
+subtitle:   ""
+date:       2017-05-26 13:14:00
+author:     "易博"
+header-img: "img/201705/18/head_bg.JPG"
+tags:
+    - Hybrid
+---
+
+```
+<input type="file" accept="image/*" capture="camera">
+```
+
+我们常见到h5里面有上面这样的写法，点击一个按钮，就可以直接调用原生的相机或者相册。但是这个在iOS中有一个问题，那就是在原生如果是经过push之后到的加载h5的VC，那么在选择完照片的时候，会返回到导航控制器的根控制器，导致h5无法正常获取用户选择的资源。那么如何解决这个问题呢？在加载h5的VC中，重写下面这个方法，就能很好的解决这个问题。
+
+```
+- (void) dismissViewControllerAnimated:(BOOL)flag completion:(void (^)(void))completion 
+{  
+    if ( self.presentedViewController) {  
+        [super dismissViewControllerAnimated:flag completion:completion];  
+    }  
+}
+```

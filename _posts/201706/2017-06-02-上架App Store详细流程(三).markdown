@@ -9,4 +9,57 @@ tags:
     - App上架
 ---
 
+承上文[《上架App Store流程(二)》](http://xttxqjfg.cn/2017/06/02/%E4%B8%8A%E6%9E%B6App-Store%E8%AF%A6%E7%BB%86%E6%B5%81%E7%A8%8B(%E4%BA%8C)/)
+
+作为系列文章的第三篇，本文主要介绍的是iTunes Connect的使用。在iTunes Connect中创建app的过程中需要的元数据说明，已经在[这篇文章](http://xttxqjfg.cn/2017/05/31/App-Store%E4%B8%8A%E6%9E%B6%E5%BA%94%E7%94%A8%E6%89%80%E9%9C%80%E6%95%B0%E6%8D%AE/)中说过，务必提前准备好
+
+一、新建app并设置基本信息
+
+登录[iTunes Connect首页](https://itunesconnect.apple.com),点击"我的App"进入
+
+![](http://www.xttxqjfg.cn/img/201706/02/03001.png)
+
+点击左上角的"+"，选择新建app
+
+![](http://www.xttxqjfg.cn/img/201706/02/03002.png)
+
+按照要求填写基本信息，不明白填什么的，可以点击对应空白标题后的"?"查看说明。SKU一般与Boundle ID保持一致。名称是在App Store上显示的名称，为了避免重名，一般采用"应用名称+简短介绍"的格式。如第二篇文章介绍，填写完基本信息创建成功后就可以到xcode中去上传编译包了。
+
+![](http://www.xttxqjfg.cn/img/201706/02/03003.png)
+
+上传的编译包如果通过了检查，那么在活动页签中将会看到上传的编译包，这样才能进行下面的上架步骤。如果检查没有通过，苹果会给你发邮件说明原因
+
+![](http://www.xttxqjfg.cn/img/201706/02/03007.png)
+
+设置应用的类别，可以设置主类别和次类别
+
+![](http://www.xttxqjfg.cn/img/201706/02/03004.png)
+
+设置销售价格和Bitcode自动编译，我这里设置的价格是免费。Bitcode自动编译的复选框一般不勾选，除非真有这样的需求
+
+![](http://www.xttxqjfg.cn/img/201706/02/03005.png)
+![](http://www.xttxqjfg.cn/img/201706/02/03006.png)
+
+二、准备提交
+
+添加屏幕快照图片，用于在App Store显示。只需要准备最多不超过5张的5.5英寸分辨率的屏幕快照，其他尺寸现在已经可以自适应了
+
+![](http://www.xttxqjfg.cn/img/201706/02/03008.png)
+
+填写app的其他信息
+
+![](http://www.xttxqjfg.cn/img/201706/02/03009.png)
+![](http://www.xttxqjfg.cn/img/201706/02/03010.png)
+![](http://www.xttxqjfg.cn/img/201706/02/03011.png)
+
+选择构建版本。如果之前的编译包通过了没有问题，那么在这里会显示一个"+"的符号，点击之后可以选择对应的构建版本来上架
+
+![](http://www.xttxqjfg.cn/img/201706/02/03012.png)
+
+至此，存储此页面的信息之后就可以选择提交审核了。提交审核之后，你能做的除了等待还是等待
+
+为了保障审核的速度，建议在提交前尽可能的多测试，不要出现很明显的bug
+
+
+
 

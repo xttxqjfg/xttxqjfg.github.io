@@ -9,7 +9,7 @@ tags:
     - App上架
 ---
 
-承上文[《上架App Store详细流程(一)》](http://xttxqjfg.cn/2017/06/02/%E4%B8%8A%E6%9E%B6App-Store%E8%AF%A6%E7%BB%86%E6%B5%81%E7%A8%8B(%E4%B8%80)/)
+承上文[《上架App Store流程(一)》](http://xttxqjfg.cn/2017/06/02/%E4%B8%8A%E6%9E%B6App-Store%E8%AF%A6%E7%BB%86%E6%B5%81%E7%A8%8B(%E4%B8%80)/)
 
 作为系列文章的第二篇，本文主要介绍的是Xcode与上架相关的配置，其余的不再介绍
 

@@ -11,9 +11,14 @@ tags:
 
 承上文[《上架App Store详细流程(一)》](http://xttxqjfg.cn/2017/06/02/%E4%B8%8A%E6%9E%B6App-Store%E8%AF%A6%E7%BB%86%E6%B5%81%E7%A8%8B(%E4%B8%80)/)
 
-作为系列文章的第二篇，本文主要介绍的是上架前Xcode的配置，主要是关于上架相关的配置，其余的不再介绍
+作为系列文章的第二篇，本文主要介绍的是Xcode与上架相关的配置，其余的不再介绍
 
 一、证书和描述文件
+
+将上篇文章中的开发者账号配置到Xcode中。打开xcode，依次点击菜单栏的"Xcode"->"Preferences..."。选择Accounts页签，添加Apple ID
+
+![](http://www.xttxqjfg.cn/img/201706/02/02009.png)
+![](http://www.xttxqjfg.cn/img/201706/02/02010.png)
 
 在工程的General中，配置正确的Boundle ID和描述文件
 
@@ -41,8 +46,20 @@ tags:
 
 ![](http://www.xttxqjfg.cn/img/201706/02/02006.png)
 
+三、上传编译包到iTunes Connect
 
+此步骤需要在iTunes Connect中创建好应用的基本信息之后才能完成，这个涉及到了下一篇文章的内容，之所以放在此处，是为了本篇文章的连续性。
 
+至此，如果工程编译没有问题，就可以提交到iTunes Connect了。跟正常的打包没什么太大区别。打开工程后菜单栏依次选择"Project"->"Archive"。
 
+点击右侧的"Upload to App Store..."
 
+![](http://www.xttxqjfg.cn/img/201706/02/02007.png)
 
+接下来就是选择对应的开发者账号和描述文件
+
+![](http://www.xttxqjfg.cn/img/201706/02/02008.png)
+
+如果提示上传成功，那xcode的部分就结束了。如果上传过程中报错，可以将返回的错误码和错误信息记录下来，去谷歌搜索解决方法，直到提交成功为止。
+
+上传时最好是翻到墙外，这样速度比较快，不翻墙你将会享受到无尽的折腾

@@ -32,6 +32,8 @@ tags:
 
 ![](http://www.xttxqjfg.cn/img/201706/02/02003.png)
 
+如果Xcode版本在8.0以上，还必须在info-plist文件中增加[访问权限的描述](http://xttxqjfg.cn/2017/05/18/iOS10%E6%9D%83%E9%99%90%E9%80%82%E9%85%8D/)。相册、相机、麦克风最好全部加上，其余的不做要求，不然后面上传编译包不会通过
+
 二、App Icon和LaunchImage
 
 在工程的Assets.xcassets中创建应用的Icon和LaunchImage集合

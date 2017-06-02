@@ -54,6 +54,7 @@ tags:
 二、创建应用的标识(IDs)
 
 点击左侧菜单的App IDs，在加载的页面上，点击右上角的"+"，新建一个(Explicit App ID)应用标识
+
     1. Name为此应用标识的名称，可以根据实际情况命名
     2. Bundle ID为应用程序的唯一标识，这个在Xcode的工程配置中会要用到，一般采取倒域名的方式命名
     3. App Services为这个应用需要用到哪些服务，默认选中的可以不用管，大部分App只会涉及到消息推送，勾选Push Notification即可

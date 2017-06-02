@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      "上架App Store详细流程(二)"
+title:      "上架App Store流程(二)"
 subtitle:   ""
 date:       2017-06-02 10:30:00
 author:     "易博"
@@ -8,4 +8,41 @@ header-img: "img/201705/18/head_bg.JPG"
 tags:
     - App上架
 ---
+
+承上文[《上架App Store详细流程(一)》](http://xttxqjfg.cn/2017/06/02/%E4%B8%8A%E6%9E%B6App-Store%E8%AF%A6%E7%BB%86%E6%B5%81%E7%A8%8B(%E4%B8%80)/)
+
+作为系列文章的第二篇，本文主要介绍的是上架前Xcode的配置，主要是关于上架相关的配置，其余的不再介绍
+
+一、证书和描述文件
+
+在工程的General中，配置正确的Boundle ID和描述文件
+
+![](http://www.xttxqjfg.cn/img/201706/02/02001.png)
+
+在工程的Capabilities中，打开消息推送功能的开关，必须出现两个勾才表示成功
+
+![](http://www.xttxqjfg.cn/img/201706/02/02002.png)
+
+在工程的Build Setting中，增加arm64的支持。目前苹果要求所有上架的应用必须支持arm64架构
+
+![](http://www.xttxqjfg.cn/img/201706/02/02003.png)
+
+二、App Icon和LaunchImage
+
+在工程的Assets.xcassets中创建应用的Icon和LaunchImage集合
+
+![](http://www.xttxqjfg.cn/img/201706/02/02004.png)
+
+要求美工按照苹果的设计要求，出对应分辨率的Icon和LaunchImage资源。图片资源可根据app的实际应用场景添加，不一定需要全部添加
+
+![](http://www.xttxqjfg.cn/img/201706/02/02005.png)
+
+在工程的General中，配置正确的Icon和LaunchImage，选择LaunchImage后记得将下方的Launch Screen File设置为空
+
+![](http://www.xttxqjfg.cn/img/201706/02/02006.png)
+
+
+
+
+
 

@@ -45,10 +45,11 @@ tags:
 在工程的General中，配置正确的Icon和LaunchImage，选择LaunchImage后记得将下方的Launch Screen File设置为空
 
 ![](http://www.xttxqjfg.cn/img/201706/02/02006.png)
+![](http://www.xttxqjfg.cn/img/201706/02/02011.jpeg)
 
 三、上传编译包到iTunes Connect
 
-此步骤需要在iTunes Connect中创建好应用的基本信息之后才能完成，这个涉及到了下一篇文章的内容，之所以放在此处，是为了本篇文章的连续性。
+此步骤需要在iTunes Connect中创建好应用的基本信息之后才能完成，这个涉及到了下一篇文章的内容，之所以放在此处，是为了本篇文章的连续性。所以先转到[这里](http://xttxqjfg.cn/2017/06/02/%E4%B8%8A%E6%9E%B6App-Store%E8%AF%A6%E7%BB%86%E6%B5%81%E7%A8%8B(%E4%B8%89)/)完成app的基本信息后再回到这个步骤继续
 
 至此，如果工程编译没有问题，就可以提交到iTunes Connect了。跟正常的打包没什么太大区别。打开工程后菜单栏依次选择"Project"->"Archive"。
 

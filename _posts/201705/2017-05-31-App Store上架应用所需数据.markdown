@@ -1,15 +1,15 @@
 ---
 layout:     post
-title:      "App Store上架应用所需数据"
+title:      "iTunes Connect上架应用所需数据"
 subtitle:   ""
 date:       2017-05-31 16:14:00
 author:     "易博"
 header-img: "img/201705/18/head_bg.JPG"
 tags:
-    - iOS
+    - App上架
 ---
 
-众所周知，在苹果的App Store上架应用有很严格的要求。下面就整理的是最新一次上架，需要提供的数据。
+众所周知，在苹果的App Store上架应用有很严格的要求。下面就整理的是最新一次上架，需要提供的数据。这些数据是在iTunes Connect中需要用到的，在开发者中心和xcode中需要的信息，在接下来的一系列文章中将会描述
 
 一、图片资源
 

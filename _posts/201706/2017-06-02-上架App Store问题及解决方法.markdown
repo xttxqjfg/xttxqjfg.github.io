@@ -19,3 +19,10 @@ tags:
 
 ![](http://www.xttxqjfg.cn/img/201706/02/04001.png)
 
+2、访问权限的问题
+
+```
+Missing Info.plist key - This app attempts to access privacy-sensitive data without a usage description. The app's Info.plist must contain an NSPhotoLibraryUsageDescription key with a string value explaining to the user how the app uses this data.
+```
+
+参照[此文章](http://xttxqjfg.cn/2017/05/18/iOS10%E6%9D%83%E9%99%90%E9%80%82%E9%85%8D/)，将对应的权限描述加进去即可解决

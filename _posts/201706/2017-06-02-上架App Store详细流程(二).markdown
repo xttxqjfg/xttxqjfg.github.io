@@ -41,11 +41,11 @@ tags:
 要求美工按照苹果的设计要求，出对应分辨率的Icon和LaunchImage资源。图片资源可根据app的实际应用场景添加，不一定需要全部添加
 
 ![](http://www.xttxqjfg.cn/img/201706/02/02005.png)
+![](http://www.xttxqjfg.cn/img/201706/02/02011.jpeg)
 
 在工程的General中，配置正确的Icon和LaunchImage，选择LaunchImage后记得将下方的Launch Screen File设置为空
 
 ![](http://www.xttxqjfg.cn/img/201706/02/02006.png)
-![](http://www.xttxqjfg.cn/img/201706/02/02011.jpeg)
 
 三、上传编译包到iTunes Connect
 

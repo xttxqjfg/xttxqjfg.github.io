@@ -9,7 +9,7 @@ tags:
     - App上架
 ---
 
-承上文[《上架App Store流程(二)》](http://xttxqjfg.cn/2017/06/02/%E4%B8%8A%E6%9E%B6App-Store%E8%AF%A6%E7%BB%86%E6%B5%81%E7%A8%8B(%E4%BA%8C)/)
+承上文[《上架App Store(二)--Xcode Config》](http://xttxqjfg.cn/2017/06/02/%E4%B8%8A%E6%9E%B6App-Store%E8%AF%A6%E7%BB%86%E6%B5%81%E7%A8%8B(%E4%BA%8C)/)
 
 作为系列文章的第三篇，本文主要介绍的是iTunes Connect的使用。在iTunes Connect中创建app的过程中需要的元数据说明，已经在[这篇文章](http://xttxqjfg.cn/2017/05/31/App-Store%E4%B8%8A%E6%9E%B6%E5%BA%94%E7%94%A8%E6%89%80%E9%9C%80%E6%95%B0%E6%8D%AE/)中说过，务必提前准备好
 

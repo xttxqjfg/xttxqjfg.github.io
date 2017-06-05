@@ -28,11 +28,13 @@ tags:
 
 #### 名词解释
 
-开发者账号
+###### 开发者账号
 
-    -> Apple Developer Program -- 99刀每年，可以在iOS App Store和Mac App Store上架应用可以以个人（Individual）或者组织（Organization）的名义加入，以组织身份加入需要提供邓白氏编码（DUNS Number），会多出Team Management功能，允许多人协作开发。在发布署名上以组织（Organization）的名义加入可以填写公司或组织信息（比如某某公司、某某工作室），而以个人（Individual）加入只能默认显示注册时填写的个人信息，并且不能修改
-    -> Apple Developer Enterprise Program -- 299刀每年，用于以InHouse方式发布企业内部应用，不能上架App Store，企业证书过期则已经安装的应用无法继续运行
-    -> iOS Developer University Program -- 高校计划需要提供高校基本信息，免费提供。苹果为鼓励高校更多的参与到苹果开发者计划中来，特意推出这一项计划，高校计划具有在真机上测试等权限，但不能将App发布到App Store。但是iOS7以后，苹果允许个人的apple id进行真机调试，此类型用的应该也不多了
+可以分为以下三种：Apple Developer Program、Apple Developer Enterprise Program、iOS Developer University Program
+
+###### 证书(Certificates)
+
+上面的例子中，原始数据加上加密后的摘要信息，就可以理解为证书。文件的体现为.cer文件
 
 #### 苹果的签名机制
 

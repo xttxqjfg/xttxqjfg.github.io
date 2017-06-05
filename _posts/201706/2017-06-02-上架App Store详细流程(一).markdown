@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      "上架App Store流程(一)"
+title:      "上架App Store(一)--Apple Developer Center"
 subtitle:   ""
 date:       2017-06-02 10:23:00
 author:     "易博"

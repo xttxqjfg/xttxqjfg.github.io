@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      "上架App Store流程(三)"
+title:      "上架App Store(三)--iTunes Connect"
 subtitle:   ""
 date:       2017-06-02 10:35:00
 author:     "易博"

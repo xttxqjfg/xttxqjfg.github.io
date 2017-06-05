@@ -1,0 +1,19 @@
+---
+layout:     post
+title:      "由浅到深理解iOS的签名机制"
+subtitle:   ""
+date:       2017-06-05 10:23:00
+author:     "易博"
+header-img: "img/201705/18/head_bg.JPG"
+tags:
+    - iOS
+---
+
+一直以来，针对iOS开发者，特别是刚入行的开发者，apple的签名机制是一个理解的难点，多种证书、描述文件、证书签名请求(CSR)等等，都是一些专业名词，加上apple签名机制的复杂性，难以理出头绪。本文将由浅入深解析apple的签名机制，希望能帮助大家解惑
+
+在这之前，首先先理解两个概念：非对称加密和数字证书
+
+##非对称加密：
+
+上面提到的签名就是数字签名，它是基于非对称加密算法实现的。对称加密算法是加密和解密内容都使用同一份密钥，而非对称加密则有两份密钥，分别是公钥和私钥，公钥对外提供，私钥自己保存。用公钥加密的数据，要用私钥才能解密，用私钥加密的数据，要用公钥才能解密。有关详细的非对称加密的解释，可以参阅百科[非对称加密算法](http://baike.baidu.com/link?url=WBJ7fFUpICd_QMGvgN5vRHgKqIdV-Qo06PNNjSRzBs83j87HrqBQocYO2FXFqAeD3RnpvxvbVeGtwv5JFt17aP2Cs5wwsNY8_Q62vocCFWTVn-ftsi2TI_W_1bjm-kqWiMttVFNC-NUUcO-JTq8Zz4uTvuE02m1UG4EK_5mpQH3)
+

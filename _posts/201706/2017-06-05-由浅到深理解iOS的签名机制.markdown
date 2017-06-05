@@ -13,7 +13,7 @@ tags:
 
 在这之前，首先先理解两个概念：非对称加密和数字证书
 
-## 非对称加密
+# 非对称加密
 
 上面提到的签名就是数字签名，它是基于非对称加密算法实现的。对称加密算法是加密和解密内容都使用同一份密钥，而非对称加密则有两份密钥，分别是公钥和私钥，公钥对外提供，私钥自己保存。用公钥加密的数据，要用私钥才能解密，用私钥加密的数据，要用公钥才能解密。有关详细的非对称加密的解释，可以参阅百科[非对称加密算法](http://baike.baidu.com/link?url=WBJ7fFUpICd_QMGvgN5vRHgKqIdV-Qo06PNNjSRzBs83j87HrqBQocYO2FXFqAeD3RnpvxvbVeGtwv5JFt17aP2Cs5wwsNY8_Q62vocCFWTVn-ftsi2TI_W_1bjm-kqWiMttVFNC-NUUcO-JTq8Zz4uTvuE02m1UG4EK_5mpQH3)
 

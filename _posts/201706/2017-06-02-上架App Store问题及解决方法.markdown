@@ -41,7 +41,10 @@ Missing Info.plist key
 对于IPv6适配这块我是这么理解的，只要你的应用在IPv6的网络下能拿到服务器的数据，应该问题就不大。但前提是IPv6-Only，所以在下面搭建IPv6环境测试的时候，确保手机开启了飞行模式，以免手机在wifi不通的情况下走数据流量，影响测试结果
 
 下面是网上整理出的几篇文章，大家可以参考下
+
 [MAC或iOS 创建 IPv6 WIFI热点](http://jingyan.baidu.com/article/6181c3e0b83071152ef153f0.html)
+
 [Ipv6_Only 简单的理解](http://www.jianshu.com/p/97b205933c15?_wv=1031)
+
 [iOS应用支持IPV6，就那点事儿](http://www.jianshu.com/p/a6bab07c4062)
 

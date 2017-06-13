@@ -23,10 +23,10 @@ UICollectionView想必都不陌生，为什么要用UICollectionView来实现无
 
 ![](http://www.xttxqjfg.cn/img/201706/13/13001.png)
 
+
 #####关键代码实现
 
 UICollectionView的初始化
-
 ```
 //自定义UICollectionView风格
 UICollectionViewFlowLayout *flowLayout = [[UICollectionViewFlowLayout alloc] init];  
@@ -45,8 +45,6 @@ self.collectionView.backgroundColor = [UIColor lightGrayColor];
 [self addSubview:self.collectionView];  
 //注册cell
 [self.collectionView registerClass:[CarouselCell class] forCellWithReuseIdentifier:@"carouselCell"];
-
-
 ```
 数据源设置完毕后让UICollectionView跳转到指定的cell
 ```
@@ -55,7 +53,39 @@ self.collectionView.backgroundColor = [UIColor lightGrayColor];
 #define DefaultRow (NSUInteger)(TotalRowsInSection * 0.5) 
 
 [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:DefaultRow inSection:0] atScrollPosition:UICollectionViewScrollPositionLeft animated:NO]; 
+```
+cell的初始化代理事件
+```
+- (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath  
+{  
+    static NSString *ID = @"carouselCell";  
 
+    CarouselCell * cell = [collectionView dequeueReusableCellWithReuseIdentifier:ID forIndexPath:indexPath];  
+    if (!cell) {  
+        cell = [[NSBundle mainBundle] loadNibNamed:@"CarouselCell" owner:self options:nil][0];  
+    }  
+    cell.dataModel = self.dataSources[indexPath.item % self.dataSources.count];  
+    return cell;  
+}
+```
+滑动一页之后修改pageControll的当前页码
+```
+- (void)collectionView:(UICollectionView *)collectionView didEndDisplayingCell:(UICollectionViewCell *)cell forItemAtIndexPath:(NSIndexPath *)indexPath  
+{  
+    NSIndexPath *visiablePath = [[collectionView indexPathsForVisibleItems] firstObject];  
+    //设置pageControl的当前页  
+    self.pageControl.currentPage = visiablePath.item % self.dataSources.count;  
+}
+```
+cell的点击事件
+```
+-(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath  
+{  
+    NSInteger index = indexPath.item % self.dataSources.count;  
+    if ([self.delegate respondsToSelector:@selector(clickedAtIndex:)]) {  
+        [self.delegate clickedAtIndex:index];  
+    }  
+}
 ```
 
 

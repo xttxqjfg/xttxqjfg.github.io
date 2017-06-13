@@ -23,4 +23,39 @@ UICollectionView想必都不陌生，为什么要用UICollectionView来实现无
 
 ![](http://www.xttxqjfg.cn/img/201706/13/13001.png)
 
+#####关键代码实现
+
+UICollectionView的初始化
+
+```
+//自定义UICollectionView风格
+UICollectionViewFlowLayout *flowLayout = [[UICollectionViewFlowLayout alloc] init];  
+flowLayout.itemSize = frame.size;  
+flowLayout.scrollDirection = UICollectionViewScrollDirectionHorizontal;  
+flowLayout.minimumLineSpacing = 0;  
+
+self.collectionView = [[UICollectionView alloc] initWithFrame:self.bounds collectionViewLayout:flowLayout];
+//设置代理和数据源
+self.collectionView.delegate = self;  
+self.collectionView.dataSource = self;  
+self.collectionView.showsHorizontalScrollIndicator = NO;  
+//允许分页
+self.collectionView.pagingEnabled = YES;  
+self.collectionView.backgroundColor = [UIColor lightGrayColor];  
+[self addSubview:self.collectionView];  
+//注册cell
+[self.collectionView registerClass:[CarouselCell class] forCellWithReuseIdentifier:@"carouselCell"];
+
+
+```
+数据源设置完毕后让UICollectionView跳转到指定的cell
+```
+//设置cell的最大数和默认显示的cell索引
+#define TotalRowsInSection (2000 * self.dataSources.count)  
+#define DefaultRow (NSUInteger)(TotalRowsInSection * 0.5) 
+
+[self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:DefaultRow inSection:0] atScrollPosition:UICollectionViewScrollPositionLeft animated:NO]; 
+
+```
+
 

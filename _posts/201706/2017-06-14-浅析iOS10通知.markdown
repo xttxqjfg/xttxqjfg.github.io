@@ -59,6 +59,7 @@ xcode8以上，需要在工程的Capabilities中开启远程通知，并且添�
 ![](http://www.xttxqjfg.cn/img/201706/14/14001.png)
 
 ```
+//注册
 #import <UserNotifications/UserNotifications.h>
 -(void)authorizationPushNotificaton:(UIApplication *)application  
 {  
@@ -83,8 +84,10 @@ xcode8以上，需要在工程的Capabilities中开启远程通知，并且添�
     //注册通知获取token  
     [application registerForRemoteNotifications];  
 }
+```
 
-//在App启动之后注册远程通知
+```
+//在App启动之后调用上述方法注册
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {  
     // Override point for customization after application launch.   
 
@@ -94,6 +97,64 @@ xcode8以上，需要在工程的Capabilities中开启远程通知，并且添�
 
     return YES;  
 } 
+
+//注册成功的处理
+-(void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken{  
+
+    NSString *deviceString = [[deviceToken description] stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"<>"]];  
+    deviceString = [deviceString stringByReplacingOccurrencesOfString:@" " withString:@""];  
+
+    NSLog(@"远端获取的deviceToken\n%@",deviceString);  
+
+    //存储得到的token，后面备用  
+    [[NSUserDefaults standardUserDefaults] setValue:deviceString forKey:@"deviceToken"];  
+    [[NSUserDefaults standardUserDefaults] synchronize];  
+}  
+
+//注册失败的处理
+-(void)application:(UIApplication *)application didFailToRegisterForRemoteNotificationsWithError:(NSError *)error{  
+    NSLog(@"获取token失败:%@\n",error.localizedDescription);  
+}
 ```
+
+#### 发送通知
+
+之前已经提到过，通知发送采用的是类似网络请求的代码风格。我们创建一个通知请求(request)，然后将这个请求提交给UNUserNotificationCenter处理，之后会在代理(delegate)中收到这个通知请求对应的回应(response)，另外，我们也可以在应用的拓展中对回应进行处理。下面是发送一个简单通知的示例代码段、远程推送的info信息和效果图
+
+```
+//创建通知  
+UNMutableNotificationContent *content = [[UNMutableNotificationContent alloc]init];  
+content.title = @"iOS 10通知";  
+content.body = @"这是一个iOS 10的消息通知...";  
+
+//创建一个触发事件  
+UNNotificationTrigger *trigger = [UNTimeIntervalNotificationTrigger triggerWithTimeInterval:timeValue repeats:NO];  
+
+//设置通知的唯一标识  
+NSString *requestIdentifer = @"timeIntervalNotification";  
+
+//创建通知的请求  
+UNNotificationRequest *request = [UNNotificationRequest requestWithIdentifier:requestIdentifer content:content trigger:trigger];  
+    [[UNUserNotificationCenter currentNotificationCenter] addNotificationRequest:request withCompletionHandler:^(NSError * _Nullable error) {  
+    if (!error) {  
+        self.label2.text = error.localizedDescription;  
+    }  
+    else  
+    {  
+        self.label2.text = @"发送成功...";  
+    }  
+}];
+
+{  
+    "aps":{  
+        "alert":{  
+        "title":"iOS 10通知",  
+        "body":"这是一个iOS 10的消息通知..."  
+        }  
+    }  
+}
+```
+
+![](http://www.xttxqjfg.cn/img/201706/14/14002.png)
 
 

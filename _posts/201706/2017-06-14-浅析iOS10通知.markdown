@@ -50,7 +50,7 @@ NSLog(@"通知配置信息:\n%@",settings);
 
 6、开发者可以自定义通知的UI界面，不再是一成不变的banner
 
-7、支持本地通知的撤回、修改和删除，不论通知是否已经展示还是未到达
+7、支持本地通知的撤回、修改和删除，不论通知是否已经展示还是未到达。目前还不支持远程推送的上述操作
 
 #### 设备注册和获取注册信息
 
@@ -156,5 +156,53 @@ UNNotificationRequest *request = [UNNotificationRequest requestWithIdentifier:re
 ```
 
 ![](http://www.xttxqjfg.cn/img/201706/14/14002.png)
+
+#### 通知的取消和修改
+
+在上述代码段中，我们在发送一个通知请求的时候会有一个标识符，这个标识符就是用来管理通知。利用UserNotifications框架提供的一系列API，可以做到
+
+    1. 取消还没有展示的通知，直接调用删除方法
+    2. 修改还没有展示的通知，用相同的标识符再发送一条通知，即可实现覆盖修改
+    3. 删除已经展示过的通知，直接调用删除方法
+    4. 修改已经展示过的通知，用相同的标识符再发送一条通知，即可实现覆盖修改
+
+```
+//创建两个用于测试的消息体  
+UNMutableNotificationContent *content1 = [[UNMutableNotificationContent alloc]init];  
+content1.title = @"1";  
+content1.body = @"通知1";  
+
+UNMutableNotificationContent *content2 = [[UNMutableNotificationContent alloc]init];  
+content2.title = @"2";  
+content2.body = @"通知2";
+  
+UNTimeIntervalNotificationTrigger *trigger = [UNTimeIntervalNotificationTrigger triggerWithTimeInterval:5 repeats:NO];  
+NSString *identifier = @"SendAndCancle";  
+UNNotificationRequest *request = [UNNotificationRequest requestWithIdentifier:identifier content:content1 trigger:trigger];  
+
+[[UNUserNotificationCenter currentNotificationCenter] addNotificationRequest:request withCompletionHandler:^(NSError * _Nullable error) {  
+    //  
+}];  
+
+//延迟2秒之后执行  
+dispatch_time_t delayTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0/*延迟执行时间*/ * NSEC_PER_SEC));  
+
+dispatch_after(delayTime, dispatch_get_main_queue(), ^{  
+[[UNUserNotificationCenter currentNotificationCenter] 
+    //取消还没有展示的通知
+    removePendingNotificationRequestsWithIdentifiers:@[identifier]];  
+
+    //用相同的标识再次发送即可覆盖  
+    UNTimeIntervalNotificationTrigger *triggerNew = [UNTimeIntervalNotificationTrigger triggerWithTimeInterval:3 repeats:NO];  
+
+    UNNotificationRequest *requestNew = [UNNotificationRequest requestWithIdentifier:@"SendAndModify" content:content2 trigger:triggerNew];  
+
+    [[UNUserNotificationCenter currentNotificationCenter] addNotificationRequest:requestNew withCompletionHandler:^(NSError * _Nullable error) {  
+        //  
+    }];
+});
+```
+
+
 
 

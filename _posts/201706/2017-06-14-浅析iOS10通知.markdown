@@ -318,4 +318,54 @@ dispatch_after(delayTime, dispatch_get_main_queue(), ^{
 
 ![](http://www.xttxqjfg.cn/img/201706/14/14003.png)
 
+#### 多媒体通知
+
+新的通知框架，允许用户发送多媒体通知。发送多媒体通知的方法也很简单，只需要通过文件的NSURL创建一个 UNNotificationAttachment对象，然后将这个对象放到数组中赋值给content的attachments属性就行了。如果需要实现远程的多媒体通知，那就需要用到通知拓展，在收到带多媒体标记的通知后，在通知展现之前将多媒体的资源下载下来，然后将附件追加到通知体的attachments中。多媒体通知仅可以发送一个多媒体资源，要发送多个的话需要采用通知拓展来实现。多媒体通知支持的文件类型和大小限制如下
+
+    1. 音频资源最大不能超过5M，可支持Wav、MP3、MPEG4格式
+    2. 图片资源最大不能超过10M，可支持JPEG、GIF、PNG格式
+    3. 视频资源最大不能超过50M，可支持MPEG、MPEG2、MPEG4、AVI格式
+
+```
+-(void)btnClicked  
+{  
+    UNMutableNotificationContent *content = [[UNMutableNotificationContent alloc]init];  
+    content.title = @"多媒体通知";  
+    content.body = @"显示一个图片";   
+
+    NSString *imageUrlStr = @"http://192.1668.8.100/www2/img/r8.jpg";  
+
+    [self downloadAndSave:[[NSURL alloc] initWithString:imageUrlStr] handler:^(NSURL *localUrl) {  
+
+        UNNotificationAttachment *attachment = [UNNotificationAttachment attachmentWithIdentifier:@"attachment" URL:localUrl options:nil error:nil];  
+
+        content.attachments = @[attachment];  
+
+        UNTimeIntervalNotificationTrigger *trigger = [UNTimeIntervalNotificationTrigger triggerWithTimeInterval:5 repeats:NO];  
+        NSString *identifier = @"media";  
+        UNNotificationRequest *request = [UNNotificationRequest requestWithIdentifier:identifier content:content trigger:trigger];  
+        [[UNUserNotificationCenter currentNotificationCenter] addNotificationRequest:request withCompletionHandler:^(NSError * _Nullable error) {  
+            //  
+        }];  
+    }];  
+}  
+
+-(void)downloadAndSave:(NSURL *)url handler: (void (^)(NSURL *localUrl)) handler  
+{  
+    NSURLRequest *request = [NSURLRequest requestWithURL:url];  
+
+    NSURLSession *session = [NSURLSession sharedSession];  
+    NSURLSessionDownloadTask *task = [session downloadTaskWithRequest:request completionHandler:^(NSURL * _Nullable location, NSURLResponse * _Nullable response, NSError * _Nullable error) {  
+    // location是沙盒中临时目录下的一个url,文件下载后会存到这个位置,  
+    //由于临时目录中的文件随时可能被删除,建议自己把下载的文件挪到需要的地方  
+    NSString *path = [[NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) lastObject] stringByAppendingPathComponent:response.suggestedFilename];  
+    [[NSFileManager defaultManager] moveItemAtURL:location toURL:[NSURL fileURLWithPath:path] error:nil];  
+        handler([NSURL fileURLWithPath:path]);  
+    }];  
+    [task resume];  
+}
+```
+
+![](http://www.xttxqjfg.cn/img/201706/14/14004.png)
+
 

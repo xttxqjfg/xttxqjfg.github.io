@@ -13,25 +13,21 @@ iOS10发布的同时苹果推出新的通知框架UserNotification，较之前�
 
 #### 新功能概览
 
-1、不再区分本地通知和远程通知，有了统一的行为。远程通知主要是消息推送、本地通知分为以下3中
+1、不再区分本地通知和远程通知，有了统一的行为。远程通知主要是消息推送、本地通知分为以下3种
 
     1. UNTimeIntervalNotificationTrigger 一定时间之后，重复或者不重复推送通知
     2. UNCalendarNotificationTrigger 一定日期之后，重复或者不重复推送通知
     3. UNLocationNotificationTrigger）地理位置的一种通知，当用户进入或离开一个地理区域来通知
 
 2、应用在前台的时候也能弹出提示。这样就不需要像之前一样自己去做处理来提醒用户
-
 3、能够获取到用户的通知设置信息，甚至修改这些设置。以前的通知是获取不到用户对应用通知相关的设置信息
-
 ```
 UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];  
 [center getNotificationSettingsWithCompletionHandler:^(UNNotificationSettings * _Nonnull settings) {  
 NSLog(@"通知配置信息:\n%@",settings);  
 }];
 ```
-
 4、通知的发送采用类似网络请求的方式，开发者更加容易接受
-
 5、通知的内容显示增加标题和副标题的区分，主标题加粗显示。通知类型也新增了多媒体通知，能都显示图片、音乐和视频资源
 ```
 {  
@@ -46,9 +42,7 @@ NSLog(@"通知配置信息:\n%@",settings);
     }  
 } 
 ```
-
 6、开发者可以自定义通知的UI界面，不再是一成不变的banner
-
 7、支持本地通知的撤回、修改和删除，不论通知是否已经展示还是未到达
 
 

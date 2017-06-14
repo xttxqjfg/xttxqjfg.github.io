@@ -368,4 +368,63 @@ dispatch_after(delayTime, dispatch_get_main_queue(), ^{
 
 ![](http://www.xttxqjfg.cn/img/201706/14/14004.png)
 
+#### Notification Service Extension(通知服务拓展)
+
+与通知相关的拓展(extension)有两个：Notification Service Extension(通知服务拓展)和 Notification Content Extension(通知内容拓展)。前者可以让我们有机会在收到远程推送的通知后，展示之前对通知内容进行修改；后者可以用来自定义通知视图的样式。
+
+![](http://www.xttxqjfg.cn/img/201706/14/14005.png)
+
+Notification Service Extension现在只对远程推送的通知有效，且需要在推送payload中增加一个mutable-content值为1的项表示启用内容修改。开启后在didReceiveNotificationRequest方法中拦截通知进行处理。下面的示例代码段展示的是修改远程通知的内容以及远程多媒体通知的实现
+
+```
+- (void)didReceiveNotificationRequest:(UNNotificationRequest *)request withContentHandler:(void (^)(UNNotificationContent * _Nonnull))contentHandler {  
+    self.contentHandler = contentHandler;  
+    self.bestAttemptContent = [request.content mutableCopy];  
+
+    // Modify the notification content here...  
+
+    if([self.bestAttemptContent.categoryIdentifier isEqualToString:@"modify"])  
+    {  
+        //如果远程推送的payload中含有modify标识，则表示需要修改消息内容  
+        self.bestAttemptContent.body = [NSString stringWithFormat:@"%@,modify by NotificationService",self.bestAttemptContent.body];  
+        self.bestAttemptContent.title = [NSString stringWithFormat:@"%@ [modified]", self.bestAttemptContent.title];  
+
+        self.contentHandler(self.bestAttemptContent);  
+    }  
+    else if([self.bestAttemptContent.categoryIdentifier isEqualToString:@"media"])  
+    {  
+        //如果远程推送的payload中含有media标识，则表示需要处理多媒体通知，包括图片、音乐、视频  
+        NSString *mediaUrlStr = [self.bestAttemptContent.userInfo objectForKey:@"mediaUrl"];  
+        NSURL *mediaUrl = [[NSURL alloc]initWithString:mediaUrlStr];  
+
+        [self downloadAndSave:mediaUrl handler:^(NSURL *localUrl) {  
+        UNNotificationAttachment *attachment = [UNNotificationAttachment attachmentWithIdentifier:@"attachment" URL:localUrl options:nil error:nil];  
+            self.bestAttemptContent.attachments = @[attachment];  
+            self.contentHandler(self.bestAttemptContent);  
+        }];  
+    }  
+    else  
+    {  
+        self.contentHandler(self.bestAttemptContent);  
+    }  
+}
+
+//远程多媒体推送的payload
+{  
+    "aps":{  
+        "alert":{  
+        "title":"多媒体通知",  
+        "body":"发送了一个美女的图片"  
+        },  
+    "mutable-content":1,
+    "category":"media"  
+    },  
+    "mediaUrl":"https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1490937858917&di=f2c49174f5d70fc92683e3b8f2bc2f45&imgtype=0&src=http%3A%2F%2Fwww.zhiyinlady.com%2Fd%2Ffile%2Fyule%2Fbayule%2F20170221%2F20170220150816873mlfamznlthd.jpg"  
+} 
+```
+
+![](http://www.xttxqjfg.cn/img/201706/14/14006.png)
+
+
+
 

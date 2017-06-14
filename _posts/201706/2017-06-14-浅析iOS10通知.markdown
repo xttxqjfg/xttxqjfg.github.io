@@ -52,5 +52,48 @@ NSLog(@"通知配置信息:\n%@",settings);
 
 7、支持本地通知的撤回、修改和删除，不论通知是否已经展示还是未到达
 
+#### 设备注册和获取注册信息
+
+xcode8以上，需要在工程的Capabilities中开启远程通知，并且添加UserNotifications.framework库
+
+![](http://www.xttxqjfg.cn/img/201706/14/14001.png)
+
+```
+#import <UserNotifications/UserNotifications.h>
+-(void)authorizationPushNotificaton:(UIApplication *)application  
+{  
+    UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];  
+    center.delegate = self; //必须写代理  
+    [center requestAuthorizationWithOptions:UNAuthorizationOptionBadge | UNAuthorizationOptionSound | UNAuthorizationOptionAlert | UNAuthorizationOptionCarPlay completionHandler:^(BOOL granted, NSError * _Nullable error) {  
+    //注册之后的回调  
+    if (!error && granted) {  
+        NSLog(@"注册成功...");  
+    }  
+    else{  
+        NSLog(@"注册失败...");  
+    }  
+    }];  
+
+    //获取注册之后的权限设置  
+    //注意UNNotificationSettings是只读对象哦，不能直接修改！  
+    [center getNotificationSettingsWithCompletionHandler:^(UNNotificationSettings * _Nonnull settings) {  
+        NSLog(@"通知配置信息:\n%@",settings);  
+    }];  
+
+    //注册通知获取token  
+    [application registerForRemoteNotifications];  
+}
+
+//在App启动之后注册远程通知
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {  
+    // Override point for customization after application launch.   
+
+    [UNUserNotificationCenter currentNotificationCenter].delegate = [NotificationHandle shareInstance];  
+
+    [[NotificationHandle shareInstance] authorizationPushNotificaton:application];  
+
+    return YES;  
+} 
+```
 
 

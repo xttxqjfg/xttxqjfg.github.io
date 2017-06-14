@@ -203,6 +203,119 @@ dispatch_after(delayTime, dispatch_get_main_queue(), ^{
 });
 ```
 
+#### 可交互的通知
 
+可交互的通知就是收到通知后，利用3D-Touch可以实现对当前通知的自定义操作。比如示例是收到一条消息后，对消息进行评价操作。首先我们需要向通知注册这些交互事件。input、open、cancle、comment这些标识符用于接收到对应交互事件后的处理判断依据
+
+```
+//注册通知中的action事件  
+-(void)registerNotificationCategory  
+{  
+    //带评论的通知事件注册  
+    UNTextInputNotificationAction *inputAction = [UNTextInputNotificationAction actionWithIdentifier:@"input" title:@"评论" options:UNNotificationActionOptionForeground textInputButtonTitle:@"发送" textInputPlaceholder:@"请输入评论内容.."];  
+    UNNotificationAction *openAction = [UNNotificationAction actionWithIdentifier:@"open" title:@"打开" options:UNNotificationActionOptionForeground];  
+    UNNotificationAction *cancleAction = [UNNotificationAction actionWithIdentifier:@"cancle" title:@"取消" options:UNNotificationActionOptionDestructive];  
+
+    UNNotificationCategory *tapCategory = [UNNotificationCategory categoryWithIdentifier:@"comment" actions:@[inputAction,openAction,cancleAction] intentIdentifiers:@[] options:UNNotificationCategoryOptionCustomDismissAction]; 
+
+    //  
+    NSSet *set = [[NSSet alloc]initWithObjects:tapCategory, nil nil];  
+    [[UNUserNotificationCenter currentNotificationCenter] setNotificationCategories:set];  
+}
+
+//在app启动后调用上述方法注册
+[[NotificationHandle shareInstance] registerNotificationCategory];
+```
+
+发送带交互的通知
+
+```
+-(void)btnClicked  
+{  
+    UNMutableNotificationContent *content = [[UNMutableNotificationContent alloc]init];  
+    content.body = @"这是一个带交互事件的通知";  
+    content.title = @"交互事件通知";  
+    //此处的唯一标识和NotificationHandle中的一一对应  
+    content.categoryIdentifier = @"comment";  
+
+    UNTimeIntervalNotificationTrigger *trigger = [UNTimeIntervalNotificationTrigger triggerWithTimeInterval:3 repeats:NO];  
+    UNNotificationRequest *request = [UNNotificationRequest requestWithIdentifier:@"actionable" content:content trigger:trigger];  
+    [[UNUserNotificationCenter currentNotificationCenter] addNotificationRequest:request withCompletionHandler:^(NSError * _Nullable error) {  
+        //  
+    }];  
+}
+
+//远程推送的payload
+{  
+    "aps":{  
+        "alert":{  
+        "title":"事件通知",  
+        "body":"这是一个带事件的通知"  
+        },  
+    "category":"conment"  //标识这是一个交互通知，用于代理事件中获取后处理  
+    }  
+} 
+```
+
+接收到交互通知的处理，收到通知后都会走didReceiveNotificationResponse这个方法
+
+```
+-(void)userNotificationCenter:(UNUserNotificationCenter *)center didReceiveNotificationResponse:(UNNotificationResponse *)response withCompletionHandler:(void (^)())completionHandler{  
+    //收到推送的请求  
+    UNNotificationRequest *request = response.notification.request;  
+    //收到的内容  
+    UNNotificationContent *content = request.content;  
+    //收到用户的基本信息  
+    NSDictionary *userInfo = content.userInfo;  
+    //收到消息的角标  
+    NSNumber *badge = content.badge;  
+    //收到消息的body  
+    NSString *body = content.body;  
+    //收到消息的声音  
+    UNNotificationSound *sound = content.sound;  
+    //推送消息的副标题  
+    NSString *subtitle = content.subtitle;  
+    //推送消息的标题  
+    NSString *title = content.title;  
+
+    if ([response.notification.request.trigger isKindOfClass:[UNNotificationTrigger class]]) {  
+        NSLog(@"点击了通知:%@\n",userInfo);  
+    }  
+    else{  
+        NSLog(@"通知:{\nbody:%@，\ntitle:%@,\nsubtitle:%@,\nbadge：%@，\nsound：%@，\nuserInfo：%@}",body,title,subtitle,badge,sound,userInfo);  
+    }  
+
+    //处理消息的事件  
+    NSString *category = content.categoryIdentifier;  
+    if ([category isEqualToString:@"comment"]) {  
+        [self handCommnet:response];  
+    }
+
+    completionHandler();  
+}  
+
+-(void)handCommnet:(UNNotificationResponse *)response  
+{  
+    NSString *actionType = response.actionIdentifier;  
+    NSString *textStr = @"";  
+
+    if ([actionType isEqualToString:@"input"]) {  
+        UNTextInputNotificationResponse *temp = (UNTextInputNotificationResponse *)response;  
+        textStr = temp.userText;  
+    }  
+    else if ([actionType isEqualToString:@"open"])  
+    {  
+        textStr = @"open";  
+    }  
+    else if ([actionType isEqualToString:@"cancle"])  
+    {  
+        textStr = @"";  
+    }  
+
+    NSLog(@"你刚输入的内容是:%@",textStr);  
+}
+```
+
+![](http://www.xttxqjfg.cn/img/201706/14/14003.png)
 
 

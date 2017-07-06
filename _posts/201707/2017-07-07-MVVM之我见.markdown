@@ -2,7 +2,7 @@
 layout:     post
 title:      "MVC、MVVM之我见"
 subtitle:   ""
-date:       2017-06-01 15:41:00
+date:       2017-06-04 15:41:00
 author:     "易博"
 header-img: "img/201705/18/head_bg.JPG"
 tags:
@@ -11,15 +11,28 @@ tags:
 
 #### MVC
 
-MVC，全称是Model(数据) View(用户界面) Controller(业务逻辑)。从这个概念被提出来到现在，MVC已经成为了主流的客户端编程架构。
+MVC，全称是Model(数据) View(用户界面) Controller(业务逻辑)。从这个概念被提出来到现在，MVC已经成为了主流的客户端编程架构
 
 ![https://msdn.microsoft.com](http://www.xttxqjfg.cn/img/201707/06/06001.gif)
 
 上面是一个典型的MVC图。Controller捕获到事件后通知Model做数据处理，Model处理完了之后Controller将数据反馈给View来完成展示或者更新。逻辑很清晰哈，但是这样会有一个明显的问题，那就是Controller时时刻刻在接管这Model和View，这就导致有可能让大量的业务逻辑代码都集中在Controller中。所以MVC又被戏称为Massive View Controller(臃肿的视图控制器)
 
-有问题出来，就肯定会有想办法来解决。针对MVC这个问题，很多人都提出了自己的见解，包括下面的MVVM。其实MVC这种架构的原则是复用，能够复用的尽量复用。没有MVC的项目，不能说就是一个不能用的项目，功能够实现了，那就是一个能用的项目，但是维护会非常麻烦。编程是一门艺术，每个程序员都要力争做一个好的艺术家。这就是MVC的魅力所在。在MVC的设计模式中，View和Model都是能够复用了，Controller相比前两者，复用的可能性就小很多，毕竟Controller是负责业务。
+有问题出来，就肯定会有想办法来解决。针对MVC这个问题，很多人都提出了自己的见解，包括下面的MVVM。其实MVC这种架构的原则是复用，能够复用的尽量复用。没有MVC的项目，不能说就是一个不能用的项目，功能够实现了，那就是一个能用的项目，但是维护会非常麻烦。编程是一门艺术，每个程序员都要力争做一个好的艺术家。这就是MVC的魅力所在。在MVC的设计模式中，View和Model都是能够复用了，Controller相比前两者，复用的可能性就小很多，毕竟Controller是负责业务
 
-既然我们知道Controller的代码不便于复用，那我们也就知道了哪些代码逻辑是应该写在Controller中，哪些不该写在Controller中。比如我们可以将初始化View和Model、监听Model和View的事件、Model的数据传递和View的事件转发这些都写在Controller中，这样Controller中的代码是不是就少了？逻辑就简单了？事实并非如此，理想是丰满的，现实是残酷的，因为除了上述的那些，还有很多其他的逻辑不知道写在哪里，于是乎，就都写在了Controller中。
+既然我们知道Controller的代码不便于复用，那我们也就知道了哪些代码逻辑是应该写在Controller中，哪些不该写在Controller中。比如我们可以将初始化View和Model、监听Model和View的事件、Model的数据传递和View的事件转发这些都写在Controller中，这样Controller中的代码是不是就少了？逻辑就简单了？事实并非如此，理想是丰满的，现实是残酷的，因为除了上述的那些，还有很多其他的逻辑不知道写在哪里，于是乎，就都写在了Controller中
 
 那么问题饶了一圈还是回到了原点，那么有什么办法呢？MVC，字面上理解就是三层，但是我们需要理解的是MVC的精髓，MVC并没有限制你只能用三层，所以我们可以将Controller中臃肿的业务逻辑抽取来到其他静态类中，形成新的可复用的模块。比如常见的网络请求模块、自定义View类、数据存储类等。通过更深层次的代码抽取，我们可以将MVC中的Controller进一步拆分为网络请求层、服务层、存储层等，来配合Controller的业务逻辑处理，这样就精简了Controller，同时也使得代码更加容易维护
 
+### MVVM
+
+MVVM，全称是Model-View-ViewModel，是微软在2005年提出的一个新的架构，放在现在也过去十几年了，其实也不算新了
+
+![https://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93viewmodel](http://www.xttxqjfg.cn/img/201707/06/06002.png)
+
+上面是MVVM的简易图，其采用双向绑定的技术。当Model变化时，ViewModel自动更新，而ViewModel变化时，View也自动变化，所以，很多时候，MVVM又被称作Model-View-Binder。目前，MVVM的普及程度远不及MVC
+
+既然存在，那就有存在的道理。MVVM在实际应用中，确实能够使得Model层和View层解耦。但是，任何事物都是两面的。我们看到MVVM最突出的一个问题就在于界面异常了，你去找问题，然而发现那可能是View出问题了，也有可能是Model出问题了，这就增加了定位问题的难度
+
+ReactiveCocoa、Angular就是从MVVM衍生出的比较流行的框架。他们都是新颖的编程框架，能够解决旧有架构的一些问题，但是也会带来一些新问题。如果不能使好的驾驭这些新框架，同样会造成之前说的Controller代码过于复杂、代码逻辑不易维护的问题。所以，东西是好，但是要驾驭这两框架还是需要有一定的功力，不能盲目。这两个框架我目前只是有最基本的了解，在此就不做过深的评价
+
+最后，说一点，时代在进步，各种新技术层出不穷，所以我们都要保持理性的分析态度，不盲目不守旧。MVC、MVVM、MVP等等这些架构，并没有什么好与不好，只有合不合适

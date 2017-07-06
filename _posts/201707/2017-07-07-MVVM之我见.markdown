@@ -1,0 +1,19 @@
+---
+layout:     post
+title:      "MVVM之我见"
+subtitle:   ""
+date:       2017-06-01 15:41:00
+author:     "易博"
+header-img: "img/201705/18/head_bg.JPG"
+tags:
+    - iOS
+---
+
+说MVVM之前，我们不得不说经典的MVC。
+
+MVC，全称是Model(数据) View(用户界面) Controller(业务逻辑)。从这个概念被提出来到现在，MVC已经成为了主流的客户端编程框架。
+
+![https://msdn.microsoft.com](http://www.xttxqjfg.cn/img/201707/06/06001.gif)
+
+上面是一个典型的MVC图。Controller捕获到事件后通知Model做数据处理，Model处理完了之后Controller将数据反馈给View来完成展示或者更新。逻辑很清晰哈，但是这样会有一个明显的问题，那就是Controller时时刻刻在接管这Model和View，这就导致有可能让大量的业务逻辑代码都集中在Controller中。所以MVC又被戏称为Massive View Controller(臃肿的视图控制器)
+

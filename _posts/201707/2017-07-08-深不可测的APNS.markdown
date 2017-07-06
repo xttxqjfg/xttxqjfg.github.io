@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      "深不可测的APNS"
+title:      "APNS机制的简单分析"
 subtitle:   ""
 date:       2017-07-06 15:41:00
 author:     "易博"
@@ -16,9 +16,12 @@ tags:
 
 那么你有没有想过，这几年移动互联网的快速发展，APNS推送数据保守估能达到将近千亿的量级，这么大的用户活跃量和巨大的消息推送数目，得多大的服务器来承受？
 
+#### 客户端
+
+如果想要你的应用能收到消息推送，其实客户端需要做的事情并不多。下面来分析下苹果消息推送的机制
+
 ![](http://www.xttxqjfg.cn/img/201707/06/06003.png)
 
-上面是消息推送的基本流程
 
     1. App开启消息推送服务，用户配置是否想要收到消息推送
     2. App向APNS注册，APNS向App返回设备码(device token)
@@ -26,4 +29,32 @@ tags:
     4. 当应用服务器想要给App发送消息时，根据设备码将需要发送的内容push到APNS
     5. APNS将消息推送到设备
 
-这个推送是不需要应用开启的情况下可以收到的
+这个推送是不需要应用开启的情况下可以收到的，也就是说苹果设备需要与APNS有连接机制，否则不可能在第一时间收到APNS的推送通知
+
+```
+//应用发起注册
+[[UIApplication sharedApplication] registerForRemoteNotificationTypes (UIRemoteNotificationTypeAlert | UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound)];
+
+//收到注册后的成功返回
+- (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken;
+
+//收到注册后的失败返回
+- (void)application:(UIApplication *)app didFailToRegisterForRemoteNotificationsWithError:(NSError *)error;
+
+//收到消息推送
+- (void) application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo fetchCompletionHandler:(nonnull void (^)(UIBackgroundFetchResult))completionHandler;
+
+```
+
+上面完成了5个步骤中的4个，剩下的就是应用服务器需要处理
+
+#### 应用服务器
+
+应用服务器需要与APNS创建一个SSL的长链接，不可能说发一个推送之后就断开连接，下次发送再次连接，这个体验就不是很好
+
+发送推送消息地址:gateway.push.apple.com:2195
+接收反馈消息地址:feedback.push.apple.com:2196 
+
+应用服务器如果推送量不大的话，没有必要做分布式服务，但是向微信、QQ这种日活跃量很大的应用，优秀的消息推送系统架构是很重要的，下图是互联网上找到的一个图片，很简单的说明应用推送系统的架构。但实际上优秀的消息推送系统远比这个复杂
+
+![](http://www.xttxqjfg.cn/img/201707/06/06004.png)

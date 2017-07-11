@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      "利用xcodeproj插件修改Xcode工程文件"
+title:      "利用ruby脚本修改Xcode工程文件"
 subtitle:   ""
 date:       2017-07-11 15:41:00
 author:     "易博"

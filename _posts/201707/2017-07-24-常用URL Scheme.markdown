@@ -38,6 +38,7 @@ tags:
 | FaceTime | App-Prefs:root=FACETIME  |
 
 #### 应用
+
 | 应用名称        | URL Scheme    |
 | --------   | --------   |
 | 微博        | weibo://      |

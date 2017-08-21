@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      "跳坑记录"
+title:      "问题随记"
 subtitle:   ""
 date:       2017-08-21 15:41:00
 author:     "易博"
@@ -13,4 +13,33 @@ tags:
     如果你用SD加载了一个本地的图片资源，然后你又在程序中修改了改图片的内容，你会发现，就算你再次使用sd去加载图片资源，即使是在主线中去操作，imageView的图片也不会更改。这是因为sd默认是将资源加载到内存中的，代码修改只是修改了存储上的内容。用下面的方法即可解决。将加载的options设置为SDWebImageRefreshCached
 
 [imageView sd_setImageWithURL:[NSURL URLWithString:url] placeholderImage:@"placeholderImage" options:SDWebImageRefreshCached];
+
+2、命令行导入证书文件
+security import ***.cer -k ***.keychain
+
+3、xcode8修改控制台不输出冗余log，OS_ACTIVITY_MODE : disable
+
+4、info.plist里面添加Localized resources can be mixed YES，表示是否允许应用程序获取框架库内语言
+
+5、允许使用http：info.plist中添加名称NSAppTransportSecurity的字典，在该字段中添加名称为NSAllowsArbitraryLoads的Boolean 类型 Bool值为YES
+
+6、统计工程代码行数
+find . "(" -name "*.m" -or -name "*.mm" -or -name "*.h" -or -name “*.xib” ")" -print | xargs wc -l
+
+7、解决编译时文件夹无访问权限的问题，chmod 755 *.sh
+
+8、MacOS开启显示隐藏文件，defaults write com.apple.finder AppleShowAllFiles -bool false
+
+9、如果你的工程引用了某些不支持ARC的库，可以在Build Phases的Compile Sources将对应的m文件的编译器参数配置为-fno-objc-arc，同理，强制使用ARC设置为-fobjc-arc
+
+10、私有方法绕过https认证
+
+```
+@implementation NSURLRequest(DataController)
++ (BOOL)allowsAnyHTTPSCertificateForHost:(NSString *)host
+{
+    return YES;
+}
+@end
+```
 

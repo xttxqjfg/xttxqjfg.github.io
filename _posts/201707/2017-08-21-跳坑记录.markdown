@@ -1,0 +1,16 @@
+---
+layout:     post
+title:      "跳坑记录"
+subtitle:   ""
+date:       2017-08-21 15:41:00
+author:     "易博"
+header-img: "img/201705/18/head_bg.JPG"
+tags:
+    - iOS
+---
+
+1、SDWebimage加载内存中的资源
+    如果你用SD加载了一个本地的图片资源，然后你又在程序中修改了改图片的内容，你会发现，就算你再次使用sd去加载图片资源，即使是在主线中去操作，imageView的图片也不会更改。这是因为sd默认是将资源加载到内存中的，代码修改只是修改了存储上的内容。用下面的方法即可解决。将加载的options设置为SDWebImageRefreshCached
+
+[imageView sd_setImageWithURL:[NSURL URLWithString:url] placeholderImage:@"placeholderImage" options:SDWebImageRefreshCached];
+

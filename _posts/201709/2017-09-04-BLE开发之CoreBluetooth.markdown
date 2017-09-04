@@ -21,14 +21,203 @@ CoreBluetooth.framework框架结构如下图所示，基于CoreBluetooth.framewo
 
 **中心设备(central)、外设(peripheral)**：这两个概念放在一起说明比较容易理解。比如当你用摩拜App去解锁自行车的时候，你的手机就是中心设备，摩拜车就是外设。如果是从mac利用airdrop传文件到手机，那么电脑就是中心设备，你的手机则又变成了外设。对应结构图中就有中心模式(CBCentralManager)和外设模式(CBPeripheralManager)两种
 
-**服务(service)**：每个外设一般都会设计若干个服务，每个服务对应一个事件。比如摩拜车，就可能会有一个解锁的服务。每个服务都会有一个唯一的标识(UUID)用于区分
+**服务(service)**：每个外设一般都会设计若干个服务，每个服务对应一个事件。比如摩拜车，就可能会有一个解锁的服务。每个服务都会有一个唯一的标识(UUID)用于区分。这个标识一般为16bit、32bit或者128bit
 
 **特征(characteristic)**：每个服务下面可以有若干个特征，设备之间的通讯就是通过这些特征值来实现的。比如在解锁摩拜车的时候，可能会有一个车锁状态的特征，解锁或者锁车之后回去修改这个特征值。同样每个特征也会有一个唯一的标识(UUID)用于区分
 
 **特征的属性**：对应特征的作用域，某些特征是只读、某些是可读可写、某些是广播等等
 
-基于上面几个概念和结构图，在了解一下使用的流程
+基于上面几个概念和结构图，在说明一下使用的流程
 
 **1、中心模式**：创建对象->搜索外设->连接外设->扫描服务->获取特征->基于特征做数据交互->完成后断开连接
 
 **2、外设模式**：创建对象->设置服务、特征、属性->发布广播->设置读写等委托方法
+
+下面详细介绍这两种模式的使用方法
+
+####  二、外设模式
+
+1、引入框架、定义标识
+
+```
+#import <CoreBluetooth/CoreBluetooth.h>
+
+#define notiyCharacteristicUUID         @"FFF1"
+#define readwriteCharacteristicUUID     @"FFF2"
+#define readCharacteristicUUID          @"FFE1"
+
+#define ServiceUUID1                    @"FFF0"
+#define ServiceUUID2                    @"FFE0"
+#define LocalNameKey                    @"MyBlueDevice"
+```
+
+2、创建外设模式管理，初始化并设置代理
+
+```
+@property (nonatomic,strong) CBPeripheralManager *peripheralManager;
+
+self.peripheralManager = [[CBPeripheralManager alloc] initWithDelegate:self queue:nil];
+
+/*
+蓝牙设备打开需要一定时间，打开成功后会进入委托方法
+- (void)peripheralManagerDidUpdateState:(CBPeripheralManager *)peripheral;
+模拟器永远也不会得CBPeripheralManagerStatePoweredOn状态，所以做测试的时候请使用真机
+*/
+
+```
+
+3、在回调中初始化服务、特征等
+
+```
+#pragma mark CBPeripheralManagerDelegate
+-(void)peripheralManagerDidUpdateState:(CBPeripheralManager *)peripheral
+{
+    switch (peripheral.state) {
+        case CBManagerStatePoweredOn:
+        {
+            NSLog(@"设备已打开....");
+            [self setupBlueInfo];
+            break;
+        }
+        default:
+            NSLog(@"异常状态:%ld",(long)peripheral.state);
+            break;
+    }
+}
+
+-(void)setupBlueInfo
+{
+    CBUUID *CBUUIDCharacteristicUserDescriptionStringUUID = [CBUUID UUIDWithString:CBUUIDCharacteristicUserDescriptionString];
+
+    //可以通知的Characteristic
+    CBMutableCharacteristic *notiyCharacteristic = [[CBMutableCharacteristic alloc]initWithType:[CBUUID UUIDWithString:notiyCharacteristicUUID] properties:CBCharacteristicPropertyNotify value:nil permissions:CBAttributePermissionsReadable];
+    
+    //可读写的characteristics
+    self.readwriteCharacteristic = [[CBMutableCharacteristic alloc]initWithType:[CBUUID UUIDWithString:readwriteCharacteristicUUID] properties:CBCharacteristicPropertyWrite | CBCharacteristicPropertyRead value:nil permissions:CBAttributePermissionsReadable | CBAttributePermissionsWriteable];
+    
+    //设置description
+    CBMutableDescriptor *readwriteCharacteristicDescription1 = [[CBMutableDescriptor alloc]initWithType: CBUUIDCharacteristicUserDescriptionStringUUID value:@"readwrite"];
+    [self.readwriteCharacteristic setDescriptors:@[readwriteCharacteristicDescription1]];
+
+    
+    //只读的Characteristic
+    //只有只读属性的特征才能设置初始值，其余设置nil即可，否则在初始化的时候会报错
+    self.readCharacteristic = [[CBMutableCharacteristic alloc]initWithType:[CBUUID UUIDWithString:readCharacteristicUUID] properties:CBCharacteristicPropertyRead value:[@"readCharacteristic" dataUsingEncoding:NSUTF8StringEncoding] permissions:CBAttributePermissionsReadable];
+
+    //service1初始化并加入两个characteristics
+    CBMutableService *service1 = [[CBMutableService alloc]initWithType:[CBUUID UUIDWithString:ServiceUUID1] primary:YES];
+    [service1 setCharacteristics:@[notiyCharacteristic,self.readwriteCharacteristic]];
+    
+    //service2初始化并加入一个characteristics
+    CBMutableService *service2 = [[CBMutableService alloc]initWithType:[CBUUID UUIDWithString:ServiceUUID2] primary:YES];
+    [service2 setCharacteristics:@[self.readCharacteristic]];
+    
+    //添加服务
+    [self.peripheralManager addService:service1];
+    [self.peripheralManager addService:service2];
+    //添加后就会调用代理的- (void)peripheralManager:(CBPeripheralManager *)peripheral didAddService:(CBService *)service error:(NSError *)error
+}
+
+-(void)peripheralManager:(CBPeripheralManager *)peripheral didAddService:(CBService *)service error:(NSError *)error
+{
+    if (error == nil) {
+        self.servicesNum++;
+    }
+    //因为我们添加了2个服务，所以想两次都添加完成后才去发送广播
+    if (self.servicesNum == 2) {
+        //添加完成之后发送广播
+        [peripheral startAdvertising:@{CBAdvertisementDataServiceUUIDsKey : @[[CBUUID UUIDWithString:ServiceUUID1],[CBUUID UUIDWithString:ServiceUUID2]],
+        CBAdvertisementDataLocalNameKey : LocalNameKey}];
+        //发送广播调用完这个方法后会调用代理的
+        //(void)peripheralManagerDidStartAdvertising:(CBPeripheralManager *)peripheral error:(NSError *)error
+    }
+}
+
+-(void)peripheralManagerDidStartAdvertising:(CBPeripheralManager *)peripheral error:(NSError *)error
+{
+    NSLog(@"peripheralManagerDidStartAdvertising......");
+}
+
+```
+
+4、处理读写和订阅的委托操作
+
+```
+//订阅characteristics
+-(void)peripheralManager:(CBPeripheralManager *)peripheral central:(CBCentral *)central didSubscribeToCharacteristic:(CBCharacteristic *)characteristic{
+    NSLog(@"订阅了 %@的数据",characteristic.UUID);
+    [self sendMsg:characteristic];
+}
+
+//取消订阅characteristics
+-(void)peripheralManager:(CBPeripheralManager *)peripheral central:(CBCentral *)central didUnsubscribeFromCharacteristic:(CBCharacteristic *)characteristic{
+    NSLog(@"取消订阅 %@的数据",characteristic.UUID);
+    [self sendMsg:characteristic];
+}
+
+//读characteristics请求
+- (void)peripheralManager:(CBPeripheralManager *)peripheral didReceiveReadRequest:(CBATTRequest *)request{
+    NSLog(@"didReceiveReadRequest");
+    //判断是否有读数据的权限
+    if (request.characteristic.properties & CBCharacteristicPropertyRead) {
+        NSData *data = request.characteristic.value;
+        [request setValue:data];
+        //对请求作出成功响应
+        [self.peripheralManager respondToRequest:request withResult:CBATTErrorSuccess];
+    }else{
+        [self.peripheralManager respondToRequest:request withResult:CBATTErrorWriteNotPermitted];
+    }
+}
+
+//写characteristics请求
+- (void)peripheralManager:(CBPeripheralManager *)peripheral didReceiveWriteRequests:(NSArray *)requests{
+    NSLog(@"didReceiveWriteRequests");
+    CBATTRequest *request = requests[0];
+    //判断是否有写数据的权限
+    if (request.characteristic.properties & CBCharacteristicPropertyWrite) {
+        //需要转换成CBMutableCharacteristic对象才能进行写值
+        CBMutableCharacteristic *c =(CBMutableCharacteristic *)request.characteristic;
+        c.value = request.value;
+        [self.peripheralManager respondToRequest:request withResult:CBATTErrorSuccess];
+    }else{
+        [self.peripheralManager respondToRequest:request withResult:CBATTErrorWriteNotPermitted];
+    }
+}
+
+//给外设发送消息
+- (void)sendMsg:(CBCharacteristic *)characteristic {
+    [self.peripheralManager updateValue:[@"success" dataUsingEncoding:NSUTF8StringEncoding] forCharacteristic:(CBMutableCharacteristic *)characteristic onSubscribedCentrals:nil];
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -33,11 +33,11 @@ CoreBluetooth.framework框架结构如下图所示，基于CoreBluetooth.framewo
 
 **2、外设模式**：创建对象->设置服务、特征、属性->发布广播->设置读写等委托方法
 
-下面详细介绍这两种模式的使用方法
+下面详细介绍这两种模式的使用方法。其中外设模式在iOS开发中一般使用频率不高，主要为中心模式
 
 ####  二、外设模式
 
-1、引入框架、定义标识
+**1、引入框架、定义标识**
 
 ```
 #import <CoreBluetooth/CoreBluetooth.h>
@@ -51,7 +51,7 @@ CoreBluetooth.framework框架结构如下图所示，基于CoreBluetooth.framewo
 #define LocalNameKey                    @"MyBlueDevice"
 ```
 
-2、创建外设模式管理，初始化并设置代理
+**2、创建外设模式管理，初始化并设置CBPeripheralManagerDelegate代理**
 
 ```
 @property (nonatomic,strong) CBPeripheralManager *peripheralManager;
@@ -66,7 +66,7 @@ self.peripheralManager = [[CBPeripheralManager alloc] initWithDelegate:self queu
 
 ```
 
-3、在回调中初始化服务、特征等
+**3、在回调中初始化服务、特征等**
 
 ```
 #pragma mark CBPeripheralManagerDelegate
@@ -140,7 +140,7 @@ self.peripheralManager = [[CBPeripheralManager alloc] initWithDelegate:self queu
 
 ```
 
-4、处理读写和订阅的委托操作
+**4、处理读写和订阅的委托操作**
 
 ```
 //订阅characteristics
@@ -189,6 +189,218 @@ self.peripheralManager = [[CBPeripheralManager alloc] initWithDelegate:self queu
     [self.peripheralManager updateValue:[@"success" dataUsingEncoding:NSUTF8StringEncoding] forCharacteristic:(CBMutableCharacteristic *)characteristic onSubscribedCentrals:nil];
 }
 ```
+
+####  三、中心模式
+
+**1、引入框架，创建中心模式管理，初始化并设置CBCentralManagerDelegate代理**
+
+```
+#import <CoreBluetooth/CoreBluetooth.h>
+
+@property (nonatomic,strong) CBCentralManager *centerManager;
+
+-(CBCentralManager *)centerManager
+{
+    if (!_centerManager) {
+        _centerManager = [[CBCentralManager alloc]initWithDelegate:self queue:nil];
+        //回调-(void)centralManagerDidUpdateState:(CBCentralManager *)central
+    }
+    return _centerManager;
+}
+
+#pragma mark CBCentralManagerDelegate
+-(void)centralManagerDidUpdateState:(CBCentralManager *)central
+{
+    switch (central.state) {
+        case CBManagerStatePoweredOn:
+        {
+            //开始扫描，传nil表示不过滤，扫描所有设备
+            [self.centerManager scanForPeripheralsWithServices:nil options:nil];
+            break;
+        }
+        default:
+            NSLog(@"异常状态:%ld",(long)central.state);
+            break;
+    }
+}
+
+//停止扫描
+[self.centralManager stopScan];
+
+```
+
+**2、扫描到设备后连接设备**
+
+```
+//扫描到设备后调用
+-(void)centralManager:(CBCentralManager *)central didDiscoverPeripheral:(CBPeripheral *)peripheral advertisementData:(NSDictionary<NSString *,id> *)advertisementData RSSI:(NSNumber *)RSSI
+{
+    [self.deviceListArr addObject:peripheral];
+    [self.tableView reloadData];
+}
+
+//点击cell开始连接设备
+-(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+
+    [self.centerManager stopScan];
+
+    CBPeripheral *peripheral = [self.deviceListArr objectAtIndex:indexPath.row];
+    NSLog(@"+++++++++++++++:%@",peripheral.identifier.UUIDString);
+
+    // 连接外设 传入你搜索到的目标外设对象
+    [self.centerManager connectPeripheral:peripheral options:nil];
+
+}
+
+//连接成功
+-(void)centralManager:(CBCentralManager *)central didConnectPeripheral:(CBPeripheral *)peripheral
+{
+    NSLog(@"连接成功...");
+    PeripheralVC *peripheralVC = [[UIStoryboard storyboardWithName:@"Main" bundle:nil] instantiateViewControllerWithIdentifier:@"PeripheralVC"];
+    peripheralVC.peripheral = peripheral;
+    [self.navigationController pushViewController:peripheralVC animated:YES];
+}
+
+//连接失败
+-(void)centralManager:(CBCentralManager *)central didFailToConnectPeripheral:(CBPeripheral *)peripheral error:(NSError *)error
+{
+    NSLog(@"连接失败...");
+}
+```
+
+**3、扫描服务**
+
+设置选择设备的CBPeripheralDelegate并开始扫描服务
+
+```
+self.peripheral.delegate = self;
+//扫描所有服务
+[self.peripheral discoverServices:nil];
+
+#pragma mark CBPeripheralDelegate
+-(void)peripheral:(CBPeripheral *)peripheral didDiscoverServices:(NSError *)error
+{
+    if (error) {
+        NSLog(@"didDiscoverServices:%@",error.localizedDescription);
+        return;
+    }
+    else
+    {
+        for (CBService *services in peripheral.services) {
+            NSLog(@"service UUID:%@",services.UUID.UUIDString);
+            [self.servicesList addObject:services];
+        }
+    }
+    [self.tableview reloadData];
+}
+
+//点击cell之后查找对应服务的特征
+-(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+
+    CBService *service = [self.servicesList objectAtIndex:indexPath.row];
+
+    CharacteristicVC *characteristicVC = [[UIStoryboard storyboardWithName:@"Main" bundle:nil] instantiateViewControllerWithIdentifier:@"CharacteristicVC"];
+    characteristicVC.peripheral = self.peripheral;
+    characteristicVC.service = service;
+    [self.navigationController pushViewController:characteristicVC animated:YES];
+}
+```
+
+**4、扫描特征**
+
+```
+//设置代理
+self.peripheral.delegate = self;
+
+#pragma mark CBPeripheralDelegate
+-(void)peripheral:(CBPeripheral *)peripheral didDiscoverCharacteristicsForService:(nonnull CBService *)service error:(nullable NSError *)error
+{
+    if (error) {
+        NSLog(@"didDiscoverCharacteristicsForService:%@",error.localizedDescription);
+        return;
+    }
+    else
+    {
+        for (CBCharacteristic *cha in service.characteristics) {
+            [self.characteristicList addObject:cha];
+            switch (cha.properties) {
+                case CBCharacteristicPropertyRead:
+                {
+                    NSLog(@"------------------读:%@",cha);
+                    break;
+                }
+                case CBCharacteristicPropertyWrite:
+                {
+                    NSLog(@"------------------写:%@",cha);
+                    break;
+                }
+                case CBCharacteristicPropertyNotify:
+                {
+                    NSLog(@"------------------订阅:%@",cha);
+                    break;
+                }
+                default:
+                    NSLog(@"------------------:%@",cha);
+                    break;
+            }
+        }
+        [self.tableView reloadData];
+    }
+}
+
+//点击cell到特征操作页面，开始做数据传输
+-(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    CBCharacteristic *characteristic = [self.characteristicList objectAtIndex:indexPath.row];
+
+    CharacteristicHandleVC *characteristicHandleVC = [[UIStoryboard storyboardWithName:@"Main" bundle:nil] instantiateViewControllerWithIdentifier:@"CharacteristicHandleVC"];
+    characteristicHandleVC.peripheral = self.peripheral;
+    characteristicHandleVC.service = self.service;
+    characteristicHandleVC.characteristic = characteristic;
+    [self.navigationController pushViewController:characteristicHandleVC animated:YES];
+}
+```
+
+**5、数据传输**
+
+数据传输都是在下面的回调中完成
+
+```
+//设置代理
+self.peripheral.delegate = self;
+
+//读数据的回调
+-(void)peripheral:(CBPeripheral *)peripheral didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic error:(NSError *)error
+{
+    self.msgShowLabel.text = [[NSString alloc] initWithData:characteristic.value encoding:NSUTF8StringEncoding];
+}
+
+//写数据的回调
+-(void)peripheral:(CBPeripheral *)peripheral didWriteValueForCharacteristic:(CBCharacteristic *)characteristic error:(NSError *)error
+{
+    if (error) {
+        self.msgShowLabel.text = @"didWriteValueForCharacteristic error";
+    }
+    else
+    {
+        //读数据
+        [peripheral readValueForCharacteristic:characteristic];
+    }
+}
+
+- (IBAction)sendMsgBtnClicked:(UIButton *)sender {
+    //写数据
+    NSString *msg = [self.msgTextField.text length] > 0 ? self.msgTextField.text : @"无";
+    [self.peripheral writeValue:[msg dataUsingEncoding:NSUTF8StringEncoding] forCharacteristic:self.characteristic type:CBCharacteristicWriteWithResponse];
+}
+```
+
+以上就是基于BLE实现的蓝牙通讯的基本介绍
 
 
 

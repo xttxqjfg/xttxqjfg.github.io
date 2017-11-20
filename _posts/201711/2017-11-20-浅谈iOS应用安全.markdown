@@ -1,0 +1,150 @@
+---
+layout:     post
+title:      "浅谈iOS应用安全"
+subtitle:   ""
+date:       2017-11-20 15:41:00
+author:     "易博"
+header-img: "img/201705/18/head_bg.JPG"
+tags:
+    - iOS
+---
+
+之前一直以为iOS的应用保护机制多，算比较安全，可最近一个项目，由于特需原因需要做安全检测，看到报告我就傻眼了，所谓的安全，其实并不安全。下面就报告中的一些问题，给出一些修改建议
+
+
+#### 越狱检测
+
+1、早几年前，苹果手机到手后，很多人第一件事想到的就是越狱，而那个时候，用户对信息安全还没有现在这么看重。你要问为什么要越狱？都会说“好玩啊，越狱之后能自定义很多东西~”。可以说，一直以来，越狱团队和苹果系统安全之间的博弈就没有停止过。好在随着系统安全度和开放的功能也越来越多，越狱难度越来越大，用户越狱的需求也降低了不少。不过，作为应用开发者，我们还是有责任提醒用户应用运行的环境。下面是网络上搜索得到的检测越狱方法的总结
+
+```
++ (BOOL)checkJailBroken
+{
+    //以下检测的过程是越往下，越狱越高级
+
+    //    /Applications/Cydia.app, /privte/var/stash
+    BOOL jailbroken = NO;
+    NSString *cydiaPath = @"/Applications/Cydia.app";
+    NSString *aptPath = @"/private/var/lib/apt/";
+
+    if ([[NSFileManager defaultManager] fileExistsAtPath:cydiaPath]) {
+        jailbroken = YES;
+    }
+    if ([[NSFileManager defaultManager] fileExistsAtPath:aptPath]) {
+        jailbroken = YES;
+    }
+
+    //可能存在hook了NSFileManager方法，此处用底层C stat去检测
+    struct stat stat_info;
+    if (0 == stat("/Library/MobileSubstrate/MobileSubstrate.dylib", &stat_info)) {
+        jailbroken = YES;
+    }
+    if (0 == stat("/Applications/Cydia.app", &stat_info)) {
+        jailbroken = YES;
+    }
+    if (0 == stat("/var/lib/cydia/", &stat_info)) {
+        jailbroken = YES;
+    }
+    if (0 == stat("/var/cache/apt", &stat_info)) {
+        jailbroken = YES;
+    }
+
+    //    /Library/MobileSubstrate/MobileSubstrate.dylib 最重要的越狱文件，几乎所有的越狱机都会安装MobileSubstrate
+    //    /Applications/Cydia.app/ /var/lib/cydia/绝大多数越狱机都会安装
+    //    /var/cache/apt /var/lib/apt /etc/apt
+    //    /bin/bash /bin/sh
+    //    /usr/sbin/sshd /usr/libexec/ssh-keysign /etc/ssh/sshd_config
+
+    //可能存在stat也被hook了，可以看stat是不是出自系统库，有没有被攻击者换掉
+    //这种情况出现的可能性很小
+    int ret;
+    Dl_info dylib_info;
+    int (*func_stat)(const char *,struct stat *) = stat;
+    if ((ret = dladdr(func_stat, &dylib_info))) {
+        NSLog(@"lib:%s",dylib_info.dli_fname);      //如果不是系统库，肯定被攻击了
+        if (strcmp(dylib_info.dli_fname, "/usr/lib/system/libsystem_kernel.dylib")) {   //不相等，肯定被攻击了，相等为0
+            jailbroken = YES;
+        }
+    }
+
+    //通常，越狱机的输出结果会包含字符串： Library/MobileSubstrate/MobileSubstrate.dylib——之所以用检测链接动态库的方法，是可能存在前面的方法被hook的情况。这个字符串，前面的stat已经做了
+
+    //如果攻击者给MobileSubstrate改名，但是原理都是通过DYLD_INSERT_LIBRARIES注入动态库
+    //那么可以，检测当前程序运行的环境变量
+    char *env = getenv("DYLD_INSERT_LIBRARIES");
+    if (env != NULL) {
+        jailbroken = YES;
+    }
+
+    return jailbroken;
+}
+```
+
+#### 动态调试、内存数据泄露
+
+应用在运行时候，可以外挂调试，如果应用没有相应的对策，那么就能拿到运行时中的一些内容，甚至修改去欺骗用户。我们可以检测到应用被外挂调试时，停止运行
+
+```
+#import <UIKit/UIKit.h>
+#import "AppDelegate.h"
+
+//防止应用程序被调试
+#import <dlfcn.h>
+
+//定义一个函数指针用来接收动态加载出来的函数ptrace
+typedef int (*ptrace_ptr_t)(int _request, pid_t _pid, caddr_t _addr, int _data);
+
+#if !defined(PT_DENY_ATTACH)
+#define PT_DENY_ATTACH 31
+#endif
+
+
+void DenyAppAttach() {
+
+    //动态加载并链接指定的库
+    //第一个参数path为0时, 它会自动查找 $LD_LIBRARY_PATH,$DYLD_LIBRARY_PATH, $DYLD_FALLBACK_LIBRARY_PATH 和 当前工作目录中的动态链接库.
+    void *handle = dlopen(0, RTLD_GLOBAL | RTLD_NOW);
+
+    //动态加载ptrace函数，ptrace函数的参数个数和类型，及返回类型跟ptrace_ptr_t函数指针定义的是一样的
+    ptrace_ptr_t ptrace_ptr = dlsym(handle, "ptrace");
+
+    //执行ptrace_ptr相当于执行ptrace函数
+    ptrace_ptr(PT_DENY_ATTACH, 0, 0, 0);
+
+    //关闭动态库，并且卸载
+    dlclose(handle);
+}
+
+int main(int argc, char * argv[]) {
+
+#ifndef DEBUG
+//    DenyAppAttach();
+#endif
+
+    @autoreleasepool {
+        return UIApplicationMain(argc, argv, nil, NSStringFromClass([AppDelegate class]));
+    }
+}
+```
+
+#### 网络代理
+
+防止中间人攻击，我们一般采用https安全链接
+
+#### 反编译
+
+我们可以通过代码混淆来达到反编译的目的。通过代码混淆，源代码中的类名和方法名将会被替换成无规则的名称，从而加大反编译的难度。目前市场上有专门做iOS代码反编译的机构，开发者也可以自己动手实现一些简单的代码混淆
+
+#### 二次签名
+
+应用启动之后，要做对应的签名检测，防止应用被二次签名打包。二次打包就必然要修改Boundle ID，我们可以通过检测Boundle ID来简单的做到反二次打包
+
+#### 日志泄露
+
+统一全局管理日志信息，应用发布之后应关闭所有的日志输出功能
+
+#### 参考文章
+
+[iOS APP安全杂谈之三](http://drops.xmd5.com/static/drops/papers-9598.html)
+[iOS越狱检测总结及代码实现](http://blog.csdn.net/zsk_zane/article/details/50704992)
+[iOS应用防止被GDB附加到进程](http://blog.csdn.net/u013538542/article/details/72675502)
+

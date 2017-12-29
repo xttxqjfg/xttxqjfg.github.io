@@ -9,4 +9,133 @@ tags:
     - iOS
 ---
 
+好久没有研究融云相关的内容了，最近看到融云已经集成了公众号，有应用内的，也有接入第三方应用市场的。不得不说，融云在即时通讯这块内容做的已经很丰富了。这里没有打广告的意思，即时通讯SDK哪家强，仁者见仁智者见智，我不做对比。只是个人使用融云的产品较多，所以这里重点介绍基于融云的SDK实现应用内公众号服务。公众号消息的发送实际上应该是由应用服务器调用融云的接口来实现，这里采用的方式是客户端模拟服务端请求向融云服务器POST数据，所以不需要准备应用服务器
 
+#### 注册应用公众号
+
+进入融云的开发者中心，左侧菜单栏选择"应用公众服务"->"自定义"->"新建自有公众号"，如下图，填写注册信息，保存成功之后，配置就结束了，记住注册时填写的公众号id。注册中有一个服务器配置，这个地址可以不填写，这个地址的作用是用户发送消息给公众号之后，融云会将收到的消息转发到这个服务器地址，应用服务器根据收到的消息内容做回复处理
+
+![](http://www.xttxqjfg.cn/img/201712/29/01001.png)
+
+#### 发送公众号服务消息
+
+应用公众服务可以接收用户的消息，亦可以向用户推送消息。消息的格式支持文本消息、多媒体消息、图文消息、语音消息。用户给公众号发送消息的处理，需要在后台的配合，这里不做介绍，具体的内容可以查阅融云的开发者文档，这里主要介绍推送图文消息
+
+[应用公众服务开发指南](http://www.rongcloud.cn/docs/public_service.html#app_public_service_message_send)
+
+调用融云的消息发送接口，方式是POST，且每次调用必须在请求头中添加一下四个字段，分别是appkey、随机数、时间戳、签名。这里需要注意的是，签名的第一个参数是app Secret而不再是appkey。下面是基于OC的代码实现
+
+```
+-(NSString *)getRandomNumber
+{
+    //1到9999的两位随机数
+    int value = (arc4random() % 9999) + 1;
+
+    return [NSString stringWithFormat:@"%d",value];
+}
+
+-(NSString *)getCurrentTimeStamp
+{
+    NSDate* date = [NSDate dateWithTimeIntervalSinceNow:0];//获取当前时间0秒后的时间
+    NSTimeInterval time = [date timeIntervalSince1970]*1000;// *1000 是精确到毫秒，不乘就是精确到秒
+    NSString *timeString = [NSString stringWithFormat:@"%.0f", time];
+
+    return timeString;
+}
+
+//需要引用#import <CommonCrypto/CommonDigest.h>
+-(NSString *)getSHA1Str:(NSString *)str
+{
+    const char *cstr = [str cStringUsingEncoding:NSUTF8StringEncoding];
+
+    NSData *data = [NSData dataWithBytes:cstr length:str.length];
+    //使用对应的CC_SHA1,CC_SHA256,CC_SHA384,CC_SHA512的长度分别是20,32,48,64
+    uint8_t digest[CC_SHA1_DIGEST_LENGTH];
+    //使用对应的CC_SHA256,CC_SHA384,CC_SHA512
+    CC_SHA1(data.bytes, data.length, digest);
+
+    NSMutableString* output = [NSMutableString stringWithCapacity:CC_SHA1_DIGEST_LENGTH * 2];
+
+    for(int i = 0; i < CC_SHA1_DIGEST_LENGTH; i++)
+        [output appendFormat:@"%02x", digest[i]];
+
+    return output;
+}
+```
+
+发送图文消息，这里采用AFN实现，具体实现代码如下
+
+```
+    NSString *randomNumber = [self getRandomNumber];
+    NSString *timeStamp = [self getCurrentTimeStamp];
+    NSString *signStr = [self getSHA1Str:[NSString stringWithFormat:@"App Secret%@%@",randomNumber,timeStamp]];
+
+    AFHTTPSessionManager *manager = [AFHTTPSessionManager manager];
+    manager.requestSerializer = [AFJSONRequestSerializer serializer];
+    manager.requestSerializer.timeoutInterval = 15.f;
+    
+    //融云需要的请求头信息
+    [manager.requestSerializer setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
+    [manager.requestSerializer setValue:@"App Key" forHTTPHeaderField:@"RC-App-Key"];
+    [manager.requestSerializer setValue:randomNumber forHTTPHeaderField:@"RC-Nonce"];
+    [manager.requestSerializer setValue:timeStamp forHTTPHeaderField:@"RC-Timestamp"];
+    [manager.requestSerializer setValue:signStr forHTTPHeaderField:@"RC-Signature"];
+
+    manager.responseSerializer = [AFJSONResponseSerializer serializer];
+    manager.responseSerializer.acceptableContentTypes = [NSSet setWithObjects:@"application/json", @"text/json", @"text/javascript",@"text/html", @"text/xml", nil];
+
+    NSDictionary *params = @{
+        @"fromuser":[NSString stringWithFormat:@"%@@APP Key",[msgInfo objectForKey:@"fromuser"]],
+        @"touser":[NSString stringWithFormat:@"%@@APP Key",[msgInfo objectForKey:@"touser"]],
+        @"msgtype":@"news",
+        @"news":@{@"articles":@[@{@"title":@"标题一标题一标题一标题一标题一标题一标题一标题一标题一",@"description":@"这是一个测试图文新闻一这是一个测试图文新闻一这是一个测试图文新闻一这是一个测试图文新闻一这是一个测试图文新闻一",@"url":@"http://www.baidu.com",@"picurl":@"http://www.xinhuanet.com/photo/2017-12/28/129777930_15144578059721n.jpg"},
+        @{@"title":@"标题二标题二标题二标题二标题二标题二标题二标题二标题二",@"description":@"这是一个测试图文新闻一这是一个测试图文新闻一这是一个测试图文新闻一这是一个测试图文新闻一这是一个测试图文新闻一",@"url":@"http://www.baidu.com",@"picurl":@"http://www.xinhuanet.com/photo/2017-12/28/129777930_15144578059721n.jpg"},
+        @{@"title":@"标题三标题三标题三标题三标题三标题三标题三标题三标题三标题三",@"description":@"这是一个测试图文新闻一这是一个测试图文新闻一这是一个测试图文新闻一这是一个测试图文新闻一这是一个测试图文新闻一",@"url":@"http://www.baidu.com",@"picurl":@"http://www.xinhuanet.com/photo/2017-12/28/129777930_15144578059721n.jpg"}]}
+    };
+
+    [manager POST:@"https://api.ps.ronghub.com/message/send.json" parameters:params success:^(NSURLSessionDataTask * _Nonnull task, id  _Nonnull responseObject) {
+
+        NSLog(@"请求成功:%@",responseObject);
+
+    } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
+
+        NSLog(@"请求失败:%@",error.localizedDescription);
+
+    }];
+```
+
+POST成功后，客户端将收到如下图所示消息
+
+![](http://www.xttxqjfg.cn/img/201712/29/01002.PNG)
+![](http://www.xttxqjfg.cn/img/201712/29/01003.PNG)
+
+#### 自定义公众服务菜单
+
+细心的读者可能注意到上面图片下面的菜单栏了，既然有了公众号消息，那么如何实现公众号菜单栏呢，很简单，融云的SDK已经提供了接口，在进会话的时候判断一下当前的会话类型，然后设置。代码如下所示
+
+```
+if (ConversationType_APPSERVICE == self.conversationType) {
+    [self.chatSessionInputBarControl setInputBarType:RCChatSessionInputBarControlPubType style:RC_CHAT_INPUT_BAR_STYLE_CONTAINER];
+
+    CGRect containFrame = self.chatSessionInputBarControl.menuContainerView.bounds;
+    CGFloat btnW = containFrame.size.width / 3;
+    CGFloat btnH = containFrame.size.height;
+
+    UIButton *btn1 = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, btnW, btnH)];
+    [btn1 setTitle:@"时事新闻" forState:(UIControlStateNormal)];
+    [btn1 setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+    [self.chatSessionInputBarControl.menuContainerView addSubview:btn1];
+
+    UIButton *btn2 = [[UIButton alloc]initWithFrame:CGRectMake(btnW, 0, btnW, btnH)];
+    [btn2 setTitle:@"政策资讯" forState:(UIControlStateNormal)];
+    [btn2 setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+    [self.chatSessionInputBarControl.menuContainerView addSubview:btn2];
+
+    UIButton *btn3 = [[UIButton alloc]initWithFrame:CGRectMake(btnW*2, 0, btnW, btnH)];
+    [btn3 setTitle:@"关于我们" forState:(UIControlStateNormal)];
+    [btn3 setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+    [self.chatSessionInputBarControl.menuContainerView addSubview:btn3];
+}
+```
+
+至于上面按钮的点击事件，就涉及到一开始说的应用服务器回复用户发送的消息了，这里不再做介绍

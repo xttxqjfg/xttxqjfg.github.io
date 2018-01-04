@@ -28,7 +28,7 @@ tags:
 ```
 -(NSString *)getRandomNumber
 {
-    //1到9999的两位随机数
+    //1到9999的四位随机数
     int value = (arc4random() % 9999) + 1;
 
     return [NSString stringWithFormat:@"%d",value];

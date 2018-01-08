@@ -59,4 +59,34 @@ testVC.do = ^(){
 };
 ```
 
+12、ViewController的加载和卸载顺序
+
+```
+加载A
+ViewController-A:initWithCoder
+ViewController-A:loadView
+ViewController-A:viewDidLoad
+ViewController-A:viewWillAppear
+ViewController-A:viewWillLayoutSubviews
+ViewController-A:viewDidLayoutSubviews
+ViewController-A:viewWillLayoutSubviews
+ViewController-A:viewDidLayoutSubviews
+//viewWillLayoutSubviews和viewDidLayoutSubviews会多次调用
+ViewController-A:viewDidAppear
+
+A push到B
+
+ViewController-A:viewWillDisappear
+ViewController-B:loadView
+ViewController-B:viewDidLoad
+ViewController-B:viewWillAppear
+ViewController-A:viewWillLayoutSubviews
+ViewController-A:viewDidLayoutSubviews
+ViewController-B:viewWillLayoutSubviews
+ViewController-B:viewDidLayoutSubviews
+ViewController-B:viewWillLayoutSubviews
+ViewController-B:viewDidLayoutSubviews
+ViewController-A:viewDidDisappear
+ViewController-B:viewDidAppear
+```
 

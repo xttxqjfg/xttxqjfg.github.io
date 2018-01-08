@@ -43,3 +43,20 @@ find . "(" -name "*.m" -or -name "*.mm" -or -name "*.h" -or -name “*.xib” ")
 @end
 ```
 
+11、在block中，我们可以使用__block和__weak来避免循环引用
+
+```
+__block typeof(self) bself = self;// MRC
+__weak typeof(self) weakself = self;//ARC
+
+如果在block内多次用到weakself，则需要使用强引用
+
+__weak __typeof(self) weakSelf = self;//block内部多次使用
+testVC.do = ^(){
+    __strong __typeof(self) strongSelf = weakSelf;
+    [strongSelf doSomeThing];
+    [strongSelf doOtherThing];
+};
+```
+
+

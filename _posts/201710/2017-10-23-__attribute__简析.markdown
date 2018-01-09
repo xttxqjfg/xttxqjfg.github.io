@@ -9,7 +9,7 @@ tags:
     - iOS
 ---
 
-__attribute__表示属性，是Clang提供的一种源码注释，方便开发者向编译器表达诉求，一般以__attribute__(***)的方式出现在代码中。为了方便使用，一些常用属性被定义成了宏，经常出现在系统头文件中。比如NS_CLASS_AVAILABLE_IOS(9_0) 就是 __attribute__(availability(9.0)) 这个属性的简单写法。下面介绍一些可能会频繁使用到的属性
+'__'attribute'__'表示属性，是Clang提供的一种源码注释，方便开发者向编译器表达诉求，一般以'__'attribute'__'(***)的方式出现在代码中。为了方便使用，一些常用属性被定义成了宏，经常出现在系统头文件中。比如NS_CLASS_AVAILABLE_IOS(9_0) 就是 '__'attribute'__'(availability(9.0)) 这个属性的简单写法。下面介绍一些可能会频繁使用到的属性
 
 #### objc_subclassing_restricted
 

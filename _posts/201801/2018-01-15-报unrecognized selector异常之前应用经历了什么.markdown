@@ -1,0 +1,107 @@
+---
+layout:     post
+title:      "报unrecognized selector异常之前应用经历了什么"
+subtitle:   ""
+date:       2018-01-15 15:41:00
+author:     "易博"
+header-img: "img/201705/18/head_bg.JPG"
+tags:
+    - iOS
+---
+
+unrecognized selector这个错误提示应该再熟悉不过了，我们都知道，OC的方法调用在运行时实际上是消息的发送。当程序向一个对象发送消息时，runtime会根据对象的isa指针找到该对象实际所属的类，然后在该类中的方法列表以及其父类方法列表中寻找对应的方法运行。然而，如果在最顶层的父类中依然找不到相应的方法时，程序在运行时会崩溃并抛出异常unrecognized selector sent to ***。那么在这个报错提示出现之前程序做了哪些事情，有没有什么办法可以避免这个报错出现呢？当然是有的，在这个报错提示出现之前，objc的运行时会给出三次拯救程序崩溃的机会
+
+```
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    
+    //调用一个没有定义的方法，在这里如果什么都不做，百分之百会崩溃
+    [self performSelector:@selector(testMethod) withObject:nil];
+}
+```
+
+### 1、resolveInstanceMethod 让类添加这个实现这个函数
+
+objc运行时会调用+resolveInstanceMethod:或者+resolveClassMethod:，在这个方法里可以另外提供一个函数实现。如果你添加了函数，那运行时系统就会重新启动一次消息发送的过程，否则运行时就会移到下一步
+
+```
+//实现这个方法之后，奔溃之前第一步会走到这里
++ (BOOL)resolveInstanceMethod:(SEL)sel {
+
+    //这里动态的增加一个消息转发
+    /** 
+    * Adds a new method to a class with a given name and implementation.
+    * 
+    * @param cls The class to which to add a method.
+    * @param name A selector that specifies the name of the method being added.
+    * @param imp A function which is the implementation of the new method. The function must take at least two arguments—self and _cmd.
+    * @param types An array of characters that describe the types of the arguments to the method. 
+    * 
+    * @return YES if the method was added successfully, otherwise NO 
+    *  (for example, the class already contains a method implementation with that name).
+    *
+    * @note class_addMethod will add an override of a superclass's implementation, 
+    *  but will not replace an existing implementation in this class. 
+    *  To change an existing implementation, use method_setImplementation.
+    */
+    class_addMethod(self.class, sel, (IMP)newMethod, "@@:");
+    //@->返回值类型id  @->id类型,执行sel的对象  :->SEL
+
+    [super resolveInstanceMethod:sel];
+    return YES;
+}
+
+id newMethod(id self, SEL _cmd)
+{
+    NSLog(@"新增加的方法");
+    return @"yes";
+}
+
+```
+
+### 2、forwardingTargetForSelector 让别的对象去执行这个函数
+
+如果目标对象实现了-forwardingTargetForSelector:，运行时这时就会调用这个方法，给你把这个消息转发给其他对象的机会。只要这个方法返回的不是nil和self，整个消息发送的过程就会被重启，当然发送的对象会变成你返回的那个对象，否则，就会继续进行下一步消息转发。与这一步不同的是，这一步不会创建任何新的对象，但下一步转发会创建一个NSInvocation对象
+
+```
+- (id)forwardingTargetForSelector:(SEL)aSelector {
+    id rslt = [super forwardingTargetForSelector:aSelector];
+    //重新定义一个新的对象转发消息，这样，流程就会进到新的对象里再次走这三个方法，如果没有定义对应的方法的话,不定义则进入第三部
+    rslt = self.target;
+    return rslt;
+}
+```
+
+### 3、methodSignatureForSelector和forwardInvocation  灵活的将目标函数以其他形式执行 
+
+这一步是运行时给出异常提示前的最后一步。首先它会发送-methodSignatureForSelector:消息获得函数的参数和返回值类型。如果-methodSignatureForSelector:返回nil，Runtime则会发出-doesNotRecognizeSelector:消息，程序这时也就崩溃了。如果返回了一个函数签名，Runtime就会创建一个NSInvocation对象并发送-forwardInvocation:消息给目标对象重新开始消息发送
+
+```
+- (NSMethodSignature *)methodSignatureForSelector:(SEL)aSelector
+{
+    id rslt = [super methodSignatureForSelector:aSelector];
+    NSMethodSignature *sig = [NSMethodSignature signatureWithObjCTypes:"v@:"];
+    //v->返回值类型void @->id类型,执行sel的对象  :->SEL
+    rslt = sig;
+    return rslt;
+}
+
+- (void)forwardInvocation:(NSInvocation *)anInvocation
+{
+    [super forwardInvocation:anInvocation];
+    [self.target forwardInvocation:anInvocation];
+}
+```
+
+### 4、doesNotRecognizeSelector 抛出异常
+
+```
+- (void)doesNotRecognizeSelector:(SEL)aSelector {
+    // 在crash前做点什么
+    [super doesNotRecognizeSelector:aSelector];
+}
+```
+
+
+
+

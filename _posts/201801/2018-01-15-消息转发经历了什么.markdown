@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      "报unrecognized selector异常之前应用经历了什么"
+title:      "消息转发经历了什么"
 subtitle:   ""
 date:       2018-01-15 15:41:00
 author:     "易博"

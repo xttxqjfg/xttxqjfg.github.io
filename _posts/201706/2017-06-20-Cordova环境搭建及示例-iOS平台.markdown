@@ -6,7 +6,7 @@ date:       2017-06-20 15:41:00
 author:     "易博"
 header-img: "img/201705/18/head_bg.JPG"
 tags:
-    - Hybird
+    - Hybrid
 ---
 
 #### Cordova环境搭建
@@ -207,3 +207,5 @@ config.xml是cordova的全局配置文件，详细的说明请看[官网的说�
     <preference name="PaginationMode" value="unpaginated" />
 </widget>
 ```
+
+

@@ -1,0 +1,135 @@
+---
+layout:     post
+title:      "runtime应用"
+subtitle:   ""
+date:       2018-03-27 10:41:00
+author:     "易博"
+header-img: "img/201705/18/head_bg.JPG"
+tags:
+    - iOS
+---
+
+Runtime运行时是OC语言的一个特性，开发者可以在运行时中做甚多事情，下面主要介绍几种常用的应用，那就是获取类的实例变量、属性、方法列表。
+
+创建一个用于测试的类，具体实现如下
+```
+//UserModel.h
+#import "Person.h"
+
+@interface UserModel : Person
+
+@property (nonatomic,strong) NSString *username;
+
+@property (nonatomic,assign) NSInteger age;
+
+-(void)updateUserInfo:(NSDictionary *)info;
+
++(NSDictionary *)getUserInfo;
+
+@end
+
+//UserModel.m
+#import "UserModel.h"
+
+@interface UserModel()
+{
+    NSString *sex;
+    NSString *userid;
+}
+
+@property (nonatomic,strong) NSString *mark;
+
+@end
+
+@implementation UserModel
+
+-(void)updateUserInfo:(NSDictionary *)info
+{
+    
+}
+
++(NSDictionary *)getUserInfo
+{
+    return @{};
+}
+
+-(void)instanceMethod
+{
+    
+}
+
++(void)classMethod
+{
+    
+}
+
+@end
+```
+
+一、获取属性列表
+
+```
+u_int  count;
+objc_property_t *properties = class_copyPropertyList([UserModel class], &count);
+for (int i = 0; i < count ; i++)
+{
+    const char *propertyName = property_getName(properties[i]);
+    NSString *strName = [NSString stringWithCString:propertyName encoding:NSUTF8StringEncoding];
+    NSLog(@"属性名称:%@",strName);
+}
+//properties属于链表指针，使用完后需要释放
+free(properties);
+
+```
+
+二、获取实例变量列表
+
+```
+unsigned int count = 0;
+Ivar *Ivars = class_copyIvarList([UserModel class], &count);
+for (unsigned int i = 0; i < count; i++) {
+    Ivar ivar = Ivars[i];
+    const char * name = ivar_getName(ivar);
+    NSLog(@"实例变量描述为: %s ", name);
+}
+free(Ivars);
+```
+
+三、获取对象方法列表
+
+```
+u_int count;
+Method *methods= class_copyMethodList([UserModel class], &count);
+for (int i = 0; i < count ; i++)
+{
+    SEL name = method_getName(methods[i]);
+    NSString *strName = [NSString stringWithCString:sel_getName(name) encoding:NSUTF8StringEncoding];
+    NSLog(@"实例方法名称:%@",strName);
+}
+free(methods);
+```
+
+四、获取类方法列表
+类本身也是一个对象，所以获取类方法可以找到类的元类，然后获取其实例方法列表
+
+```
+u_int  count;
+const char *clsName = class_getName([UserModel class]);
+Class metaClass = objc_getMetaClass(clsName);
+Method *methods= class_copyMethodList(metaClass, &count);
+for (int i = 0; i < count ; i++)
+{
+    SEL name = method_getName(methods[i]);
+    NSString *strName = [NSString stringWithCString:sel_getName(name) encoding:NSUTF8StringEncoding];
+    NSLog(@"类方法名称:%@",strName);
+}
+free(methods);
+```
+
+下图是上面运行结果的截图，从截图可以看到，此方法是无法获取父类的属性、实例变量等，获取方法时自动合成的set和get方法也能获取到。自动合成的实例变量会在属性名称前加上下划线
+
+![](http://www.xttxqjfg.cn/img/201803/27/01001.png)
+
+
+
+

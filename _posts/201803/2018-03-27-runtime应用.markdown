@@ -87,11 +87,19 @@ free(properties);
 二、获取实例变量列表
 
 ```
+UserModel *userModel = [[UserModel alloc]init];
 unsigned int count = 0;
 Ivar *Ivars = class_copyIvarList([UserModel class], &count);
 for (unsigned int i = 0; i < count; i++) {
     Ivar ivar = Ivars[i];
     const char * name = ivar_getName(ivar);
+    //修改实例变量的值，修改私有变量的值可以通过KVC和Runtime来实现
+    if (0 == strcmp(name, "userid")) {
+        object_setIvar(userModel, Ivars[i], @"100002");
+    }
+    else if (0 == strcmp(name, "_age")) {
+        object_setIvar(userModel, Ivars[i], @(30));
+    }
     NSLog(@"实例变量描述为: %s ", name);
 }
 free(Ivars);

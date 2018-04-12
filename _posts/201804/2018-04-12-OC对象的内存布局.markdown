@@ -1,0 +1,60 @@
+---
+layout:     post
+title:      "OC对象的内存布局"
+subtitle:   ""
+date:       2018-04-12 10:41:00
+author:     "易博"
+header-img: "img/201705/18/head_bg.JPG"
+tags:
+    - iOS
+---
+
+#### 一、内存划分
+
+介绍内存布局之前首先说一下内存的划分。OC程序的内存划分从高地址到低地址分别是栈区、堆区、全局区、常量区、代码区
+
+    1、栈区：存放局部变量和函数实参，iPhone的栈区大小是连续的512K，由系统管理\n
+    2、堆区：存放代码创建的对象，由开发者自己管理，非连续\n
+    3、全局区：存储全局变量和静态变量，由系统管理\n
+    4、常量区：存储常量字符串，由系统管理\n
+    5、代码区：存储二进制代码
+
+#### 二、OC对象的内存布局
+
+对于Objective-C而言，所有的类定义都是对象。这里指的是类对象(class object)，这个要跟实例对象(instance object)区别开来。实例对象就不再介绍，所谓的类对象，可以看成是在运行时生成实例对象的模板、依据。实例对象中都会有一个isa指针，该指针指向其类对象。这个类对象存储了该实例对象定义的方法、协议等。所以在讨论OC对象的内存布局时，自然也就要从类对象和实例对象两方面来考虑
+
+### 类对象的内存布局
+
+类对象的定义我们参照如下在runtime.中对objc_class的定义。
+
+```
+struct objc_class {  
+    Class isa;  
+    Class super_class;  
+    const charchar *name;  
+    long version;  
+    long info;  
+    long instance_size;  
+    struct objc_ivar_list *ivars;  
+    struct objc_method_list **methodLists;  
+    struct objc_cache *cache;  
+    struct objc_protocol_list *protocols;  
+
+} OBJC2_UNAVAILABLE;
+```
+
+从定义我们可以看出，类对象也有对应的isa指针，因为类对象本身也是一个实例对象，其类对象是元类，所以其isa指针指向元类(meta class)。另外还包含父类指针、实例变量列表、方法列表、协议列表。可以结合下图理解
+
+![](http://www.xttxqjfg.cn/img/201804/12/01001.png)
+
+根对象是NSObject，其父类指针指向nil。根元类的isa指针指向本身，父类指针指向NSObject
+
+### 实例对象的内存布局
+
+实例对象的内存布局比较简单，主要包括isa指针指向其类对象，和各级实例变量，如下图所示
+
+![](http://www.xttxqjfg.cn/img/201804/12/01002.png)
+
+
+总结上面的介绍，类的实例变量（包括从父类继承）都保存在实例对象本身的存储空间内。类的实例方法保存在类对象中，类方法保存在元类对象中。父类的实例方法保存在各级父类中，父类的类方法保存在各级父元类中
+

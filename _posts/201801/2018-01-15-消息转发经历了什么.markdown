@@ -103,6 +103,7 @@ id newMethod(id self, SEL _cmd)
 ```
 
 下面是上文中出现的编码值，可以在官方文档里面找到
+```
 编码值     含意
 c     代表char类型
 i     代表int类型
@@ -128,6 +129,7 @@ v     代表void类型
 bnum     A bit field of num bits
 ^type     A pointer to type
 ?     An unknown type (among other things, this code is used for function pointers)
+```
 
 
 

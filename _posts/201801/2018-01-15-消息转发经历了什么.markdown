@@ -103,31 +103,31 @@ id newMethod(id self, SEL _cmd)
 ```
 
 下面是上文中出现的编码值，可以在官方文档里面找到
-//编码值     含意
-//c     代表char类型
-//i     代表int类型
-//s     代表short类型
-//l     代表long类型，在64位处理器上也是按照32位处理
-//q     代表long long类型
-//C     代表unsigned char类型
-//I     代表unsigned int类型
-//S     代表unsigned short类型
-//L     代表unsigned long类型
-//Q     代表unsigned long long类型
-//f     代表float类型
-//d     代表double类型
-//B     代表C++中的bool或者C99中的_Bool
-//v     代表void类型
-//*     代表char *类型
-//@     代表对象类型
-//#     代表类对象 (Class)
-//:     代表方法selector (SEL)
-//[array type]     代表array
-//{name=type…}     代表结构体
-//(name=type…)     代表union
-//bnum     A bit field of num bits
-//^type     A pointer to type
-//?     An unknown type (among other things, this code is used for function pointers)
+编码值     含意
+c     代表char类型
+i     代表int类型
+s     代表short类型
+l     代表long类型，在64位处理器上也是按照32位处理
+q     代表long long类型
+C     代表unsigned char类型
+I     代表unsigned int类型
+S     代表unsigned short类型
+L     代表unsigned long类型
+Q     代表unsigned long long类型
+f     代表float类型
+d     代表double类型
+B     代表C++中的bool或者C99中的_Bool
+v     代表void类型
+*     代表char *类型
+@     代表对象类型
+#     代表类对象 (Class)
+:     代表方法selector (SEL)
+[array type]     代表array
+{name=type…}     代表结构体
+(name=type…)     代表union
+bnum     A bit field of num bits
+^type     A pointer to type
+?     An unknown type (among other things, this code is used for function pointers)
 
 
 

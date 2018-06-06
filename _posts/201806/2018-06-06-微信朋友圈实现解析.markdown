@@ -1,0 +1,23 @@
+---
+layout:     post
+title:      "微信朋友圈页面实现解析"
+subtitle:   ""
+date:       2018-06-06 10:41:00
+author:     "易博"
+header-img: "img/201705/18/head_bg.JPG"
+tags:
+    - iOS
+---
+
+先上两个图，看下大致效果。Demo代码可以去我github中找
+
+![](http://www.xttxqjfg.cn/img/201806/06/06001.png)
+
+![](http://www.xttxqjfg.cn/img/201806/06/06002.png)
+
+网上查阅了几种朋友圈的实现，最后决定采用这种方案。整个页面采用一个分组的tableview实现，组头中包含朋友圈的内容、用户头像、用户名称、图片组、时间标识、点赞区，如图中红框1中绿框所示部分。朋友圈的评论通过tableview的cell实现，如图中红框2所示。这样能更好的利用tableview的复用机制
+
+#### 关键点
+
+1、点赞区和评论区的用户名点击跳转事件是采用YYKit中的YYLabel实现(Github搜索YYKit)
+2、cell的宽度为整个屏幕宽，需要禁用掉cell原有的点击效果，否则在点击cell时评论区左右的空白会变色。所以需要自行实现评论内容的点击效果

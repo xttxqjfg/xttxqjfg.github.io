@@ -1,0 +1,70 @@
+---
+layout:     post
+title:      "音频播放中断处理"
+subtitle:   ""
+date:       2018-06-25 19:41:00
+author:     "易博"
+header-img: "img/201705/18/head_bg.JPG"
+tags:
+    - iOS
+---
+
+这里所讲的中断处理分为两种，第一种是软件级中断，比如来电。另一种是硬件级中断，比如插入耳机。当然这个软件级和硬件级仅仅做区分解释
+
+#### 软件级
+
+当出现中断时，iOS SDK会发出对应的中断通知，开发者只需要监听对应的通知完成相应操作即可。
+
+```
+NSNotificationCenter *nsnc = [NSNotificationCenter defaultCenter];
+[nsnc addObserver:self selector:@selector(handleInterruptionChange:) name:AVAudioSessionInterruptionNotification object:[AVAudioSession sharedInstance]];
+
+
+- (void)handleInterruptionChange:(NSNotification *)notification
+{
+    NSDictionary *info = notification.userInfo;
+
+    AVAudioSessionInterruptionType type = [info[AVAudioSessionInterruptionTypeKey] unsignedIntegerValue];
+
+    if (type == AVAudioSessionInterruptionTypeBegan) {
+        //do something
+    }
+    else
+    {
+        AVAudioSessionInterruptionOptions options = [info[AVAudioSessionInterruptionOptionKey] unsignedIntegerValue];
+        if (options == AVAudioSessionInterruptionOptionShouldResume) {
+            //do something
+        }
+    }
+}
+
+```
+
+#### 硬件级
+
+同理，出现硬件级中断时，AVAudioSession同样会给出对应的中断通知。这里需要注意的是耳机断开这个事件，对应的原因是AVAudioSessionRouteChangeReasonOldDeviceUnavailable
+
+```
+NSNotificationCenter *nsnc = [NSNotificationCenter defaultCenter];
+[nsnc addObserver:self selector:@selector(handleRouteChange:) name:AVAudioSessionRouteChangeNotification object:[AVAudioSession sharedInstance]];
+
+- (void)handleRouteChange:(NSNotification *)notification {
+
+    NSDictionary *info = notification.userInfo;
+
+    AVAudioSessionRouteChangeReason reason = [info[AVAudioSessionRouteChangeReasonKey] unsignedIntValue];
+
+    if (reason == AVAudioSessionRouteChangeReasonOldDeviceUnavailable) 
+    {
+        AVAudioSessionRouteDescription *previousRoute = info[AVAudioSessionRouteChangePreviousRouteKey];
+
+        AVAudioSessionPortDescription *previousOutput = previousRoute.outputs[0];
+        NSString *portType = previousOutput.portType;
+
+        if ([portType isEqualToString:AVAudioSessionPortHeadphones]) 
+        {
+            //do something...
+        }
+    }
+}
+```

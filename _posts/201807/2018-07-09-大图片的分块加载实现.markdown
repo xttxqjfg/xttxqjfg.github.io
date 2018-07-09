@@ -1,0 +1,96 @@
+---
+layout:     post
+title:      "大图片的分块加载实现"
+subtitle:   ""
+date:       2018-07-09 15:41:00
+author:     "易博"
+header-img: "img/201705/18/head_bg.JPG"
+tags:
+    - iOS
+---
+
+当在app中需要加载超大分辨率，比如现在的5K图片时，性能的优化就凸显出来了。那么通过什么方法来解决这个问题呢？我们可以采取UIScrollView和CATileLayer来实现，实现的效果类似于百度地图的分块加载
+
+首先我们通过代码将大图裁剪成若干小图，MacOS代码如下所示。运行前将需要裁剪图片的地址添加到Edit Scheme中
+
+```
+int main(int argc, const char * argv[]) {
+    @autoreleasepool {
+        // 处理错误异常
+        if (argc < 2) {
+            NSLog(@"TileCutter arguments: inputfile");
+            return 0;
+        }
+
+        //文件输入
+        NSString *inputFile = [NSString stringWithCString:argv[1] encoding:NSUTF8StringEncoding];
+        CGFloat tileSize = 256;
+        //文件输出
+        NSString *outputPath = [inputFile stringByDeletingPathExtension];
+        NSImage *image = [[NSImage alloc]initWithContentsOfFile:inputFile];
+        NSSize size = [image size];
+        NSArray *representations = [image representations];
+        if ([representations count]) {
+            NSBitmapImageRep *representation = representations[0];
+            size.width = [representation pixelsWide];
+            size.height = [representation pixelsHigh];
+        }
+        NSRect rect = NSMakeRect(0.0, 0.0, size.width, size.height);
+        CGImageRef imageRef = [image CGImageForProposedRect:&rect context:nil hints:nil];
+
+        NSInteger rows = ceil(size.height / tileSize);
+        NSInteger cols = ceil(size.width / tileSize);
+
+        for (int y = 0; y < rows; ++y) {
+            for (int x = 0; x < cols; ++x) {
+                CGRect tileRect = CGRectMake(x * tileSize, y * tileSize, tileSize, tileSize);
+                CGImageRef tileImage = CGImageCreateWithImageInRect(imageRef, tileRect);
+
+                NSBitmapImageRep *imageRep = [[NSBitmapImageRep alloc] initWithCGImage:tileImage];
+                NSData *data = [imageRep representationUsingType:NSJPEGFileType properties:nil];
+
+                CGImageRelease(tileImage);
+
+                NSString *path = [outputPath stringByAppendingFormat:@"_%02i_%02i.jpg",x,y];
+                [data writeToFile:path atomically:NO];
+            }
+        }
+    }
+    return 0;
+}
+```
+
+利用CATileLayer来实现的代码
+
+```
+- (void)viewDidLoad {
+[super viewDidLoad];
+// Do any additional setup after loading the view, typically from a nib.
+
+    CATiledLayer *tileLayer = [CATiledLayer layer];
+    tileLayer.frame = CGRectMake(0, 0, 2048, 2048);
+    tileLayer.delegate = self;
+    [self.scrollerView.layer addSublayer:tileLayer];
+
+    self.scrollerView.contentSize = tileLayer.frame.size;
+    
+    [tileLayer setNeedsDisplay];
+}
+
+-(void)drawLayer:(CATiledLayer *)layer inContext:(CGContextRef)ctx
+{
+    CGRect bounds = CGContextGetClipBoundingBox(ctx);
+    NSInteger x = floor(bounds.origin.x / layer.tileSize.width);
+    NSInteger y = floor(bounds.origin.y / layer.tileSize.height);
+
+    NSString *imageName = [NSString stringWithFormat:@"ai_%02i_%02i",x,y];
+    NSString *imagePath = [[NSBundle mainBundle] pathForResource:imageName ofType:@"jpg"];
+
+    UIImage *tileImage = [UIImage imageWithContentsOfFile:imagePath];
+
+    UIGraphicsPushContext(ctx);
+    [tileImage drawInRect:bounds];
+    UIGraphicsPopContext();
+}
+```
+

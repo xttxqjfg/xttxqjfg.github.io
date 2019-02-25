@@ -9,7 +9,7 @@ tags:
     - iOS
 ---
 
-本文转载自![掘金](https://juejin.im/post/5afaaf996fb9a07ac5604a92)，如有侵权，请邮箱联系我删除
+本文转载自 [掘金](https://juejin.im/post/5afaaf996fb9a07ac5604a92) ，如有侵权，请邮箱联系我删除
 
 一、开发中如何使用NSTimer
 

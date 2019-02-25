@@ -1,0 +1,281 @@
+---
+layout:     post
+title:      "NSTimer使用解析"
+subtitle:   ""
+date:       2019-02-25 15:41:00
+author:     "易博"
+header-img: "img/201705/18/head_bg.JPG"
+tags:
+    - iOS
+---
+
+本文转载自![掘金](https://juejin.im/post/5afaaf996fb9a07ac5604a92)，如有侵权，请邮箱联系我删除
+
+一、开发中如何使用NSTimer
+
+```
+1.   self.timer = [NSTimer scheduledTimerWithTimeInterval:1.0 target:self selector:@selector(timerFired) userInfo:nil repeats:YES];
+
+2.  self.timer = [NSTimer scheduledTimerWithTimeInterval:1.0 target:self selector:@selector(timerFired) userInfo:nil repeats:YES];
+[[NSRunLoop mainRunLoop] addTimer:self.timer forMode:NSDefaultRunLoopMode];
+
+```
+这两个方法是等价的，区别是第一个方法默认创建了一个NSTimer并自动添加到了当前线程的Runloop中去，第二个需要我们手动添加。如果当前线程是主线程的话，某些UI事件，比如UIScrollView的拖拽操作，会将Runloop切换成UITrackingRunLoopMode,这时候，默认的NSDefaultRunLoopMode模式中注册的事件是不会被执行的。所以为了设置一个不会被UI干扰的Timer，我们需要手动将timer的当前RunloopMode设置为NSRunLoopCommonModes，这个模式等效于NSDefaultRunLoopMode和UITrackingRunLoopMode的结合
+
+二、NSTimer无法释放的原因分析
+
+上面的使用方法是没问题的，但是大家在使用过程中一定遇到过因使用了NSTimer，导致所在的UIViewController内存泄漏的问题，这种原因是怎么出现的呢？ 其中许多人都认为是UIViewController和NSTimer循环引用的问题，彼此强引用，导致了彼此无法释放，那么问题真的是这样吗？
+
+1、验证如下
+
+```
+NSTimer *timer = [NSTimer timerWithTimeInterval:1.0 target:self selector:@selector(timerFired) userInfo:nil repeats:YES];
+[[NSRunLoop mainRunLoop] addTimer:timer forMode:NSRunLoopCommonModes];
+//结果：将NSTimer设置成局部变量，你会发现两者仍释放不了。
+```
+2、将self设置成弱引用，又会是什么现象呢?
+
+```
+__weak typeof(self) weakSelf = self;
+NSTimer *timer = [NSTimer timerWithTimeInterval:1.0 target:weakSelf selector:@selector(timerFired) userInfo:nil repeats:YES];
+[[NSRunLoop mainRunLoop] addTimer:timer forMode:NSRunLoopCommonModes];
+//结果：两者仍然无法释放。
+```
+
+3、如果我们将target强制释放，强制破坏循环引用呢?
+
+```
+TimerAction *Test = [TimerAction new];
+NSTimer *timer = [NSTimer timerWithTimeInterval:1.0 target:Test selector:@selector(test) userInfo:nil repeats:YES];
+[[NSRunLoop mainRunLoop] addTimer:timer forMode:NSRunLoopCommonModes];
+CFRelease((__bridge CFTypeRef)(Test));
+//结果：Test顺利释放，但Timer仍在运行。并且在Timer触发事件时崩溃
+```
+
+4、在timer建立后面断点,查看运行的时候内存图
+
+![](http://www.xttxqjfg.cn/img/201902/25/25001.png)
+
+结果：其实只有timer单向的指向target,target并未指向timer,是因为timer运行的时候释放不了,导致被强引用的target也无法释放。并非循环引用导致不释放。
+
+三、解决NSTimer的内存泄漏问题
+
+一般呢解决NSTimer的内存泄漏问题，通常有两种方法，第一种是找对合适的时机释放NSTimer，通常人们会想到两个调用时机
+
+```
+-(void)dealloc
+{
+[self.timer invalidate];
+}
+//NSTimer，通常人们会想到两个调用时机。
+
+-(void)viewWillDisappear:(BOOL)animated
+{
+[super viewWillDisappear:animated];
+[self.timer invalidate];
+}
+//这种情况是可以解决循环引用的问题，内存可以释放，但是又会引来新的问题，当导航控制器push到下一个页面时，当前VC并没有被释放，这时候我们可能并不想销毁NSTimer，我们通常希望VC该销毁的时候，同时销毁NSTimer，所以调用invalidate方法的时机很难找
+```
+
+那么就是第二种了，想办法破除强引用，让NSTimer和VC同生共死，这种方法呢也有两种方式
+
+1、使用block的方式
+
+```
+#import <Foundation/Foundation.h>
+typedef void(^JSTimerBlcok)(NSTimer *timer);
+@interface NSTimer (Category)
+
++ (NSTimer *)js_scheduledTimerWithTimeInterval:(NSTimeInterval)timeInterval executeBlock:(JSTimerBlcok)block repeats:(BOOL)repeats;
+
+@end
+
+#import "NSTimer+Category.h"
+
+@implementation NSTimer (Category)
+
++(NSTimer *)js_scheduledTimerWithTimeInterval:(NSTimeInterval)timeInterval executeBlock:(JSTimerBlcok)block repeats:(BOOL)repeats
+{
+
+NSTimer *timer = [self scheduledTimerWithTimeInterval:timeInterval target:self selector:@selector(js_executeTimer:) userInfo:[block copy] repeats:repeats];
+
+return timer;
+
+}
+
++(void)js_executeTimer:(NSTimer *)timer
+
+{
+JSTimerBlcok block = timer.userInfo;
+if (block) {
+block(timer);
+}
+}
+@end
+使用案例： 
+- (void)viewDidLoad { 
+    [super viewDidLoad]; 
+    __weak typeof(self) weakSelf = self; 
+    self.timer = [NSTimer js_scheduledTimerWithTimeInterval:1.0 executeBlock:^(NSTimer *timer){         
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        [strongSelf timerFired:timer];       
+        } 
+    repeats:YES];
+}
+```
+
+2、使用NSProxy来初始化一个子类，这里我们直接用YYWeakProcy
+
+```
+#import <Foundation/Foundation.h>
+
+NS_ASSUME_NONNULL_BEGIN
+
+@interface YYWeakProxy : NSProxy
+
+@property (nullable, nonatomic, weak, readonly) id target;
+
+- (instancetype)initWithTarget:(id)target;
+
++ (instancetype)proxyWithTarget:(id)target;
+
+@end
+
+NS_ASSUME_NONNULL_END
+
+#import "YYWeakProxy.h"
+
+
+@implementation YYWeakProxy
+
+- (instancetype)initWithTarget:(id)target {
+_target = target;
+return self;
+}
+
++ (instancetype)proxyWithTarget:(id)target {
+return [[YYWeakProxy alloc] initWithTarget:target];
+}
+
+- (id)forwardingTargetForSelector:(SEL)selector {
+return _target;
+}
+
+- (void)forwardInvocation:(NSInvocation *)invocation {
+void *null = NULL;
+[invocation setReturnValue:&null];
+}
+
+- (NSMethodSignature *)methodSignatureForSelector:(SEL)selector {
+return [NSObject instanceMethodSignatureForSelector:@selector(init)];
+}
+
+- (BOOL)respondsToSelector:(SEL)aSelector {
+return [_target respondsToSelector:aSelector];
+}
+
+- (BOOL)isEqual:(id)object {
+return [_target isEqual:object];
+}
+
+- (NSUInteger)hash {
+return [_target hash];
+}
+
+- (Class)superclass {
+return [_target superclass];
+}
+
+- (Class)class {
+return [_target class];
+}
+
+- (BOOL)isKindOfClass:(Class)aClass {
+return [_target isKindOfClass:aClass];
+}
+
+- (BOOL)isMemberOfClass:(Class)aClass {
+return [_target isMemberOfClass:aClass];
+}
+
+- (BOOL)conformsToProtocol:(Protocol *)aProtocol {
+return [_target conformsToProtocol:aProtocol];
+}
+
+- (BOOL)isProxy {
+return YES;
+}
+
+- (NSString *)description {
+return [_target description];
+}
+
+- (NSString *)debugDescription {
+return [_target debugDescription];
+}
+
+@end
+使用案例：
+- (void)initTimer {
+YYWeakProxy *proxy = [YYWeakProxy proxyWithTarget:self];
+_timer = [NSTimer timerWithTimeInterval:0.1 target:proxy selector:@selector(tick:) userInfo:nil repeats:YES];
+}
+//至于具体的原理，让NSTimer定时中的方法由YYWeakProxy转发给VC执行.但是NStimer持有的却不是VC.这样就不会循环引用.
+```
+
+四、开发中如何创建更精确的定时器
+
+大家应该知道，NSTimer的精确度一般能达到1ms，也就是小于1毫秒时，误差会很大，那么如何创建一个误差很小，甚至没有误差的定时器呢
+
+1、纳秒级精度的Timer
+
+```
+#include <mach mach.h="">
+#include <mach mach_time.h="">
+static const uint64_t NANOS_PER_USEC = 1000ULL;
+
+static const uint64_t NANOS_PER_MILLISEC = 1000ULL * NANOS_PER_USEC;
+static const uint64_t NANOS_PER_SEC = 1000ULL * NANOS_PER_MILLISEC;
+static mach_timebase_info_data_t timebase_info;
+
+static uint64_t nanos_to_abs(uint64_t nanos) {
+
+return nanos * timebase_info.denom / timebase_info.numer;
+
+}
+void waitSeconds(int seconds) {
+
+mach_timebase_info(&timebase_info);
+
+uint64_t time_to_wait = nanos_to_abs(seconds * NANOS_PER_SEC);
+
+uint64_t now = mach_absolute_time();
+
+mach_wait_until(now + time_to_wait);
+
+}</mach></mach>
+//理论上这是iPhone上最精准的定时器，可以达到纳秒级别的精度
+```
+2、CADisplayLink
+
+```
+CADisplayLink * displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(logInfo)];
+[displayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
+//CADisplayLink是一个频率能达到屏幕刷新率的定时器类。iPhone屏幕刷新频率为60帧/秒，也就是说最小间隔可以达到1/60s。
+```
+3、GCD定时器
+
+```
+NSTimeInterval interval = 1.0;
+_timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0));
+
+dispatch_source_set_timer(_timer, dispatch_walltime(NULL, 0), interval * NSEC_PER_SEC, 0);
+
+dispatch_source_set_event_handler(_timer, ^{
+
+NSLog(@"GCD timer test");
+
+});
+dispatch_resume(_timer);
+//RunLoop是dispatch_source_t实现的timer，所以理论上来说，GCD定时器的精度比NSTimer只高不低。
+```

@@ -45,3 +45,30 @@ IPANAME="${WORKSPACE}/build/Release-iphoneos/****.ipa"
 LOGMSG="upload from jenkins"
 curl -F "file=@${IPANAME}" -F "uKey=userkey" -F "_api_key=apikey" -F "updateDescription=${LOGMSG}" https://qiniu-storage.pgyer.com/apiv1/app/upload
 ```
+
+7、ipa上传到蒲公英平台之后发送邮件通知。这里用到了sendEmail的插件，可以用一个命令发送邮件。插件下载解压到任意可执行的目录即可，官网下载地址http://caspian.dotconf.net/menu/Software/SendEmail/。[站内下载地址](http://www.xttxqjfg.cn/img/201901/24/sendEmail-v1.56.tar.gz)
+
+![](http://www.xttxqjfg.cn/img/201901/24/24007.png)
+
+```
+#!/bin/bash
+#多人接收，邮箱中用空格分开
+email_reciver="***@qq.com **@qq.com"
+#发送者邮箱
+email_sender=***@qq.com
+#邮箱用户名
+email_username=***@qq.com
+#邮箱密码
+email_password=****
+
+#smtp服务器地址
+email_smtphost=smtp.qq.com
+
+appBuildURL="https://www.pgyer.com/***"
+qrCodeURL="https://www.pgyer.com/app/qrcode/***"
+
+email_title="Auto:***客户端安装包更新"
+email_content="<h4>有新版本的安装包更新，点击下载!</h4></br> <a style="color:red">版本更新说明:</a> </br> ${commitDesText}</br></br><a href="${appBuildURL}">下载安装链接</a> </br></br></br> <img src="${qrCodeURL}" width="250" height="250"/>"
+
+/Users/**/Public/sendEmail-v1.56/sendEmail -f ${email_sender} -t ${email_reciver} -s ${email_smtphost} -u ${email_title} -xu ${email_username} -xp ${email_password} -m ${email_content} -o message-charset=utf-8 tls=no message-content-type=html
+```
